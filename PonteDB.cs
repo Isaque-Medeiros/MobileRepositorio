@@ -5,7 +5,7 @@ using System;
 
 namespace PonteBanco
 {
-    public class BSFMContext : DbContext
+    public class PonteDB : DbContext
     {
         // Tabelas do Banco
         public DbSet<Usuario> Usuarios { get; set; }
