@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BSFM - Portal LIBRAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        indigo: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    },
+                    animation: {
+                        'fade-in-up': 'fadeInUp 0.6s ease-out forwards',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-in-from-bottom': 'slideInFromBottom 0.5s ease-out forwards',
+                        'bounce-slow': 'bounce 2s infinite',
+                    },
+                    keyframes: {
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideInFromBottom: {
+                            '0%': { opacity: '0', transform: 'translateY(30px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        bounce: {
+                            '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
+                            '40%': { transform: 'translateY(-10px)' },
+                            '60%': { transform: 'translateY(-5px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            overflow-x: hidden;
+            background: linear-gradient(135deg, #eef2ff 0%, #f8fafc 50%, #eef2ff 100%);
+            min-height: 100vh;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 10px; }
+
+        /* Glass effect */
+        .glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(199, 210, 254, 0.6);
+            border-radius: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px -8px rgba(79, 70, 229, 0.15);
+            border-color: #c7d2fe;
+        }
+
+        /* Video card */
+        .video-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(199, 210, 254, 0.6);
+            border-radius: 1.5rem;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            cursor: pointer;
+        }
+        .video-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #6366f1 0%, #4f46e5 100%);
+            transform: scaleY(0);
+            transition: transform 0.3s ease;
+        }
+        .video-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 16px 40px -10px rgba(79, 70, 229, 0.18);
+            border-color: #c7d2fe;
+        }
+        .video-card:hover::before {
+            transform: scaleY(1);
+        }
+
+        /* Play button */
+        .play-btn {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .video-card:hover .play-btn {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        /* Video overlay */
+        .video-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0.6) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .video-card:hover .video-overlay {
+            opacity: 1;
+        }
+
+        /* Button styles */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 1.5rem;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px -3px rgba(79, 70, 229, 0.3);
+            border: none;
+            cursor: pointer;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px -5px rgba(79, 70, 229, 0.4);
+        }
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+            color: #4338ca;
+            font-weight: 600;
+            padding: 0.875rem 1.5rem;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            border: 1px solid #c7d2fe;
+            cursor: pointer;
+        }
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+            color: #3730a3;
+            border-color: #a5b4fc;
+            transform: translateY(-1px);
+        }
+
+        /* Staggered animation delays */
+        .animate-delay-100 { animation-delay: 100ms; }
+        .animate-delay-200 { animation-delay: 200ms; }
+        .animate-delay-300 { animation-delay: 300ms; }
+        .animate-delay-400 { animation-delay: 400ms; }
+        .animate-delay-500 { animation-delay: 500ms; }
+        .animate-delay-600 { animation-delay: 600ms; }
+
+        /* Back button */
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            color: #64748b;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+        }
+        .back-btn:hover {
+            background: #eef2ff;
+            color: #6366f1;
+            transform: translateX(-4px);
+        }
+
+        /* Accessibility focus styles */
+        .video-card:focus, .video-card:active {
+            outline: 3px solid #6366f1;
+            outline-offset: 2px;
+        }
+
+        /* Loading animation */
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid #eef2ff;
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 animate-in slide-in-from-bottom duration-500">
+
+    <div class="max-w-6xl mx-auto">
+        <!-- HEADER LIBRAS -->
+        <header class="flex items-center justify-between mb-8 opacity-0 animate-fade-in-up">
+            <div class="flex items-center gap-4">
+                <a href="dashboard.html" class="back-btn">
+                    <i class="fas fa-chevron-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-black text-slate-900 italic tracking-tight uppercase">BSFM <span class="text-indigo-600">LIBRAS</span></h1>
+                    <p class="text-slate-500 text-sm">Aprendizado acessível e inclusivo</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="bg-indigo-100 p-4 rounded-2xl border-2 border-indigo-200">
+                    <i class="fas fa-hands-asl-interpreting text-indigo-600 text-4xl bounce-slow"></i>
+                </div>
+            </div>
+        </header>
+
+        <!-- BUSCA E CATEGORIAS -->
+        <div class="glass rounded-3xl p-8 mb-8 text-center md:text-left flex flex-col md:flex-row items-center justify-between gap-6 opacity-0 animate-fade-in-up animate-delay-100">
+            <div>
+                <h2 class="text-2xl font-black text-slate-900 mb-2">Conhecimento que se vê.</h2>
+                <p class="text-slate-500 font-medium">Aprenda sobre nutrição inteligente de forma acessível e visual.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <span class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-full text-xs font-bold uppercase">Mais Assistidos</span>
+                <span class="bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full text-xs font-bold uppercase">Alimentação Saudável</span>
+                <span class="bg-orange-100 text-orange-700 px-4 py-2 rounded-full text-xs font-bold uppercase">Dieta Inteligente</span>
+                <span class="bg-purple-100 text-purple-700 px-4 py-2 rounded-full text-xs font-bold uppercase">Metas de Peso</span>
+            </div>
+        </div>
+
+        <!-- FILTROS -->
+        <div class="glass p-6 rounded-2xl mb-8 opacity-0 animate-fade-in-up animate-delay-200">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="filtrarVideos('todos')" class="btn-secondary px-4 py-2 text-sm active-btn">Todos</button>
+                    <button onclick="filtrarVideos('in-natura')" class="btn-secondary px-4 py-2 text-sm">In Natura</button>
+                    <button onclick="filtrarVideos('processados')" class="btn-secondary px-4 py-2 text-sm">Processados</button>
+                    <button onclick="filtrarVideos('macros')" class="btn-secondary px-4 py-2 text-sm">Macros</button>
+                    <button onclick="filtrarVideos('dicas')" class="btn-secondary px-4 py-2 text-sm">Dicas</button>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-slate-500">
+                    <i class="fas fa-clock"></i>
+                    <span>Tempo médio: 3-5 minutos</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- GRID DE VÍDEOS EDUCATIVOS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+            <!-- Video Card 01 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-300" tabindex="0" role="button" aria-label="In natura vs Processados: Como identificar em sinais?">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1547514701-42782101795e?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Alimentos naturais" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">LIBRAS + Legenda</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Tutorial #01</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">In natura vs Processados</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Nutrição</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Como identificar em sinais?</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 2.1K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 4:32</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Card 02 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-400" tabindex="0" role="button" aria-label="Planejando sua dieta semanal com a métrica BSFM">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1490818387583-1baba5e638af?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Planejamento de dieta" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Somente Sinais</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Capacitação #05</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">Planejando sua dieta semanal</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">BSFM</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Com a métrica BSFM</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 1.8K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 5:15</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Card 03 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-500" tabindex="0" role="button" aria-label="Macronutrientes: Proteínas, Carboidratos e Gorduras explicados em LIBRAS">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Macronutrientes" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">LIBRAS + Legenda</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Tutorial #02</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">Macronutrientes</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Macros</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Proteínas, Carboidratos e Gorduras</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 3.2K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 6:45</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Card 04 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-600" tabindex="0" role="button" aria-label="Metas de peso saudáveis: Como estabelecer objetivos realistas">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Metas de peso" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">LIBRAS + Legenda</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Metas #01</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">Metas de peso saudáveis</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Objetivos</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Objetivos realistas</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 2.9K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 4:20</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Card 05 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-300" tabindex="0" role="button" aria-label="Dicas práticas para refeições equilibradas no dia a dia">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Refeições equilibradas" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">LIBRAS + Legenda</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Dicas #03</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">Dicas práticas</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Dia a dia</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Refeições equilibradas</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 4.1K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 3:45</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Card 06 -->
+            <div class="video-card opacity-0 animate-fade-in-up animate-delay-400" tabindex="0" role="button" aria-label="Hidratação correta: Quantos litros de água você realmente precisa?">
+                <div class="aspect-video relative bg-gradient-to-br from-indigo-100 to-indigo-200">
+                    <img src="https://images.unsplash.com/photo-1564493276560-419366399839?q=80&w=800&auto=format&fit=crop" class="w-full h-full object-cover" alt="Hidratação" />
+                    <div class="video-overlay"></div>
+                    <div class="play-btn">
+                        <i class="fas fa-play text-lg"></i>
+                    </div>
+                    <div class="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] px-2 py-1 rounded font-bold uppercase">Somente Sinais</div>
+                    <div class="absolute top-3 left-3 bg-indigo-600 text-white text-xs px-2 py-1 rounded-full font-bold">Saúde #04</div>
+                </div>
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-bold text-slate-900 text-lg leading-tight">Hidratação correta</h3>
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">Água</span>
+                    </div>
+                    <p class="text-xs text-slate-500 mb-4">Quantos litros você precisa?</p>
+                    <div class="flex items-center justify-between text-xs text-slate-400">
+                        <span><i class="fas fa-eye mr-1"></i> 1.5K visualizações</span>
+                        <span><i class="fas fa-clock mr-1"></i> 2:30</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CALL TO ACTION -->
+        <div class="glass rounded-3xl p-8 text-center opacity-0 animate-fade-in-up animate-delay-500">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex-1 text-left">
+                    <h3 class="font-bold text-slate-900 text-xl mb-2">Novo conteúdo em produção</h3>
+                    <p class="text-slate-500">Sugira temas para novos vídeos no nosso canal oficial.</p>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full">Sugestões</span>
+                        <span class="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full">Feedback</span>
+                        <span class="text-xs bg-orange-100 text-orange-700 px-3 py-1 rounded-full">Comunidade</span>
+                    </div>
+                </div>
+                <button class="btn-primary px-8 py-3 text-lg" onclick="abrirFormularioSugestao()">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    FAZER SUGESTÃO
+                </button>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="text-center mt-12 opacity-0 animate-fade-in-up animate-delay-600">
+            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                <i class="fas fa-universal-access mr-2"></i>
+                Educação inclusiva para todos - BSFM
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Função de filtro de vídeos
+        function filtrarVideos(categoria) {
+            const cards = document.querySelectorAll('.video-card');
+            const botoes = document.querySelectorAll('.btn-secondary');
+            
+            // Atualizar botões
+            botoes.forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white');
+                btn.classList.add('bg-indigo-100', 'text-indigo-700');
+            });
+            
+            // Destacar botão ativo
+            event.target.classList.remove('bg-indigo-100', 'text-indigo-700');
+            event.target.classList.add('bg-indigo-600', 'text-white');
+
+            // Filtrar cards
+            cards.forEach(card => {
+                if (categoria === 'todos') {
+                    card.style.display = 'block';
+                    card.style.animationDelay = '0ms';
+                } else {
+                    const titulo = card.querySelector('h3').innerText.toLowerCase();
+                    const descricao = card.querySelector('p').innerText.toLowerCase();
+                    
+                    if (titulo.includes(categoria) || descricao.includes(categoria)) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+        // Função para abrir formulário de sugestão
+        function abrirFormularioSugestao() {
+            alert('Formulário de sugestão de conteúdo:\n\n1. Envie sua sugestão para: contato@bsfm.com\n2. Ou acesse nosso Discord: discord.bsfm.com\n3. Siga-nos no Instagram: @bsfm.oficial\n\nAgradecemos sua participação!');
+        }
+
+        // Função para reproduzir vídeo (simulação)
+        document.querySelectorAll('.video-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const titulo = this.querySelector('h3').innerText;
+                alert(`Reproduzindo vídeo: "${titulo}"\n\nEm produção: Integração com player de vídeo acessível.`);
+            });
+            
+            card.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+
+        // Inicialização
+        window.onload = function() {
+            // Forçar validação do tamanho do container
+            setTimeout(() => {
+                document.body.style.opacity = '1';
+            }, 100);
+        };
+    </script>
+</body>
+</html>
