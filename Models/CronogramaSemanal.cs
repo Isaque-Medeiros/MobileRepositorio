@@ -26,16 +26,16 @@ namespace BSFM.Models
 
         [Required]
         [StringLength(100)]
-        public string NomePlano { get; set; }
+        public string NomePlano { get; set; } = string.Empty;
 
         [StringLength(500)]
-        public string Observacoes { get; set; }
+        public string Observacoes { get; set; } = string.Empty;
 
         public DateTime DataCriacao { get; set; } = DateTime.Now;
         public DateTime? DataUltimaAtualizacao { get; set; }
 
         // Relacionamentos
-        public virtual Usuario Usuario { get; set; }
+        public virtual Usuario? Usuario { get; set; }
         public virtual ICollection<RefeicaoDiaria> RefeicoesDiarias { get; set; } = new List<RefeicaoDiaria>();
     }
 
@@ -56,7 +56,7 @@ namespace BSFM.Models
 
         [Required]
         [StringLength(100)]
-        public string NomeRefeicao { get; set; }
+        public string NomeRefeicao { get; set; } = string.Empty;
 
         [Required]
         public TimeSpan Horario { get; set; }
@@ -71,10 +71,10 @@ namespace BSFM.Models
         public decimal? Fibra { get; set; } // em gramas
 
         [StringLength(500)]
-        public string Ingredientes { get; set; }
+        public string Ingredientes { get; set; } = string.Empty;
 
         [StringLength(1000)]
-        public string InstrucoesPreparo { get; set; }
+        public string InstrucoesPreparo { get; set; } = string.Empty;
 
         public bool EstaConcluida { get; set; } = false;
         public DateTime? DataConclusao { get; set; }
@@ -83,7 +83,7 @@ namespace BSFM.Models
         public DateTime? DataUltimaAtualizacao { get; set; }
 
         // Relacionamentos
-        public virtual CronogramaSemanal CronogramaSemanal { get; set; }
+        public virtual CronogramaSemanal? CronogramaSemanal { get; set; }
     }
 
     /// <summary>
@@ -106,14 +106,14 @@ namespace BSFM.Models
     public class ImportarPrescricaoRequest
     {
         [Required]
-        public string ImagemBase64 { get; set; }
+        public string ImagemBase64 { get; set; } = string.Empty;
 
         [Required]
         [StringLength(100)]
-        public string NomePlano { get; set; }
+        public string NomePlano { get; set; } = string.Empty;
 
         [StringLength(500)]
-        public string Observacoes { get; set; }
+        public string Observacoes { get; set; } = string.Empty;
 
         public DateTime? DataInicio { get; set; }
     }
@@ -124,11 +124,11 @@ namespace BSFM.Models
     public class ImportarPrescricaoResponse
     {
         public bool Sucesso { get; set; }
-        public string Mensagem { get; set; }
+        public string Mensagem { get; set; } = string.Empty;
         public int CronogramaId { get; set; }
         public int TotalRefeicoes { get; set; }
-        public List<RefeicaoDiaria> RefeicoesProcessadas { get; set; }
-        public List<string> ErrosProcessamento { get; set; }
+        public List<RefeicaoDiaria> RefeicoesProcessadas { get; set; } = new List<RefeicaoDiaria>();
+        public List<string> ErrosProcessamento { get; set; } = new List<string>();
     }
 
     /// <summary>
@@ -137,15 +137,15 @@ namespace BSFM.Models
     public class RefeicaoViewModel
     {
         public int Id { get; set; }
-        public string NomeRefeicao { get; set; }
-        public string Horario { get; set; }
-        public string Descricao { get; set; }
-        public string Ingredientes { get; set; }
+        public string NomeRefeicao { get; set; } = string.Empty;
+        public string Horario { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public string Ingredientes { get; set; } = string.Empty;
         public int? Calorias { get; set; }
         public decimal? Proteinas { get; set; }
         public decimal? Carboidratos { get; set; }
         public decimal? Gorduras { get; set; }
         public bool EstaConcluida { get; set; }
-        public string DiaSemana { get; set; }
+        public string DiaSemana { get; set; } = string.Empty;
     }
 }

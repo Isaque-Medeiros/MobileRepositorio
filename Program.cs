@@ -28,11 +28,11 @@ builder.Services.AddCors(options => {
 builder.Services.AddHostedService<LimpezaAnalisesService>(); 
 builder.Services.AddSingleton<BSFM.Services.YoloInferenceService>();
 builder.Services.AddHttpClient<BSFM.Services.UsdaNutritionService>();
-builder.Services.AddDbContext<BSFMContext>();
+builder.Services.AddDbContext<PonteDB>();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope()) {
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     Console.WriteLine("[POSTGRES] Garantindo criação de tabelas...");
     db.Database.EnsureCreated(); // Isso vai criar 'analises_ia' forçadamente agora.
 }
@@ -51,7 +51,7 @@ app.MapGet("/", (IWebHostEnvironment env) =>
 
 app.MapPost("/solicitar-codigo", (SolicitacaoEmail req) => {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     var email = req.Email.Trim().ToLower();
     
     if (db.Usuarios.AsNoTracking().Any(u => u.Email.ToLower() == email))
@@ -67,7 +67,7 @@ app.MapPost("/solicitar-codigo", (SolicitacaoEmail req) => {
 
 app.MapPost("/cadastrar-usuario-final", (Usuario usuarioVindoDoJs) => {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     // Cuidado: Certifique-se que o pacote BCrypt.Net-Next está no .csproj
     usuarioVindoDoJs.SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioVindoDoJs.SenhaHash);
     usuarioVindoDoJs.EmailVerificado = true; 
@@ -79,7 +79,7 @@ app.MapPost("/cadastrar-usuario-final", (Usuario usuarioVindoDoJs) => {
 
 app.MapPost("/login", (LoginDTO dadosLogin) => {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == dadosLogin.Email.Trim().ToLower());
     if (user != null && BCrypt.Net.BCrypt.Verify(dadosLogin.Senha, user.SenhaHash)) {
         return Results.Ok(new { id = user.ID, nome = user.Nome, imc = user.IMC, tmb = user.TMB, gasto = user.GastoTotal }); 
@@ -90,7 +90,7 @@ app.MapPost("/login", (LoginDTO dadosLogin) => {
 // --- ROTA: ESQUECI MINHA SENHA (PASSO 1) ---
 app.MapPost("/esqueci-senha", (EsqueceuSenhaDTO req) => {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     var email = req.Email.Trim().ToLower();
 
     // 1. Verifica se o usuário existe
@@ -111,7 +111,7 @@ app.MapPost("/esqueci-senha", (EsqueceuSenhaDTO req) => {
 // --- ROTA: REDEFINIR SENHA (PASSO 2 - FINAL) ---
 app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
     var email = req.Email.Trim().ToLower();
 
     // 1. Localiza o usuário
@@ -134,7 +134,7 @@ app.MapPost("/analisar-prato", async (
     [FromForm] int usuarioId, 
     BSFM.Services.YoloInferenceService yolo, 
     BSFM.Services.UsdaNutritionService nutri, 
-    PonteBanco.BSFMContext db) => 
+    PonteBanco.PonteDB db) => 
 {
     using var ms = new MemoryStream();
     await foto.CopyToAsync(ms);
@@ -189,7 +189,7 @@ app.MapPost("/analisar-prato", async (
     return Results.Ok(new { dados = analiseFinal });
 }).DisableAntiforgery();
 
-app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.BSFMContext db) => 
+app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => 
 {
     var historico = await db.AnalisesIA
         .Where(a => a.UsuarioID == usuarioId)
@@ -199,7 +199,7 @@ app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.B
     return Results.Ok(historico);
 });
 
-app.MapGet("/evolucao/{usuarioId}", async (int usuarioId, PonteBanco.BSFMContext db) => {
+app.MapGet("/evolucao/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
     var logs = await db.Historicos
         .Where(h => h.UsuarioID == usuarioId)
         .OrderByDescending(h => h.DataRegistro)
@@ -208,7 +208,7 @@ app.MapGet("/evolucao/{usuarioId}", async (int usuarioId, PonteBanco.BSFMContext
 });
 
 // ROTA: Registrar nova medição (Peso/Altura)
-app.MapPost("/atualizar-medicao", async (HistoricoProgresso novaMedicao, PonteBanco.BSFMContext db) => {
+app.MapPost("/atualizar-medicao", async (HistoricoProgresso novaMedicao, PonteBanco.PonteDB db) => {
     // 1. Calcula o IMC para o histórico
     novaMedicao.IMC = Math.Round(novaMedicao.Peso / (novaMedicao.Altura * novaMedicao.Altura), 2);
     novaMedicao.DataRegistro = DateTime.Now;
@@ -229,7 +229,7 @@ app.MapPost("/atualizar-medicao", async (HistoricoProgresso novaMedicao, PonteBa
     return Results.Ok(new { mensagem = "Medição registrada!", imc = novaMedicao.IMC, userAtualizado = user });
 });
 
-app.MapPost("/definir-meta", async (MetaDTO dados, PonteBanco.BSFMContext db) => {
+app.MapPost("/definir-meta", async (MetaDTO dados, PonteBanco.PonteDB db) => {
     var user = await db.Usuarios.FindAsync(dados.UsuarioId);
     if (user == null) return Results.NotFound();
     

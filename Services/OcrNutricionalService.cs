@@ -483,7 +483,7 @@ GORDURAS: 70g (20%)
     /// </summary>
     public class InformacoesPlano
     {
-        public string Objetivo { get; set; }
+        public string Objetivo { get; set; } = string.Empty;
         public int? CaloriasDiarias { get; set; }
         public int? ProteinasDiarias { get; set; }
         public int? CarboidratosDiarios { get; set; }

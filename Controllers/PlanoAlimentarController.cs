@@ -504,18 +504,18 @@ namespace BSFM.Controllers
     public class AdicionarRefeicaoRequest
     {
         [Required]
-        public string NomeRefeicao { get; set; }
+        public string NomeRefeicao { get; set; } = string.Empty;
 
         [Required]
-        public string Descricao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
 
         [Required]
-        public string DiaSemana { get; set; }
+        public string DiaSemana { get; set; } = string.Empty;
 
         [Required]
-        public string Horario { get; set; }
+        public string Horario { get; set; } = string.Empty;
 
-        public string Ingredientes { get; set; }
+        public string Ingredientes { get; set; } = string.Empty;
         public int? Calorias { get; set; }
         public decimal? Proteinas { get; set; }
         public decimal? Carboidratos { get; set; }
