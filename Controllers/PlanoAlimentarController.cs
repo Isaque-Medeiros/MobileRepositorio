@@ -263,7 +263,7 @@ namespace BSFM.Controllers
 
                 var refeicao = await _db.RefeicoesDiarias
                     .Include(r => r.CronogramaSemanal)
-                    .Where(r => r.Id == refeicaoId && r.CronogramaSemanal.UsuarioId == usuarioId)
+                    .Where(r => r.Id == refeicaoId && r.CronogramaSemanal != null && r.CronogramaSemanal.UsuarioId == usuarioId)
                     .FirstOrDefaultAsync();
 
                 if (refeicao == null)

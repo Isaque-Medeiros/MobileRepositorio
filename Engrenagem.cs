@@ -39,7 +39,7 @@ namespace BSFM
         // Método para efetivar o salvamento no SQLite
         public void SalvarNoBancoDeDados(Usuario usuario)
         {
-            using (var db = new BSFMContext())
+            using (var db = new PonteDB())
             {
                 db.Database.EnsureCreated(); // Garante que as tabelas existam
                 db.Usuarios.Add(usuario);
@@ -51,7 +51,7 @@ namespace BSFM
         // Lógica de Autenticação (Login)
         public (bool sucesso, Usuario? usuario) Autenticar(string email, string senhaDigitada)
         {
-            using (var db = new BSFMContext())
+            using (var db = new PonteDB())
             {
                 string emailTratado = email.Trim().ToLower();
                 

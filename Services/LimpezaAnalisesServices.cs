@@ -20,7 +20,7 @@ public class LimpezaAnalisesService : BackgroundService
         {
             using (var scope = _serviceProvider.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<BSFMContext>();
+                var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
                 
                 // GARANTIA: Cria as tabelas caso ainda não existam no Postgres
                 db.Database.EnsureCreated();

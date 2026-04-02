@@ -62,7 +62,7 @@ namespace BSFM.Models
         public TimeSpan Horario { get; set; }
 
         [StringLength(500)]
-        public string Descricao { get; set; }
+        public string Descricao { get; set; } = string.Empty;
 
         public int? Calorias { get; set; }
         public decimal? Proteinas { get; set; } // em gramas
