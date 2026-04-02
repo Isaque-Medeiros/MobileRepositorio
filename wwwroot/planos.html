@@ -29,11 +29,16 @@
                 </div>
             </div>
 
-            <!-- SMART BUTTON: SCANER OCR (Futura Integração) -->
-            <button onclick="document.getElementById('inputOCR').click()" class="bg-gray-900 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1">
-                <i class="fas fa-file-invoice text-emerald-400"></i> IMPORTAR RECEITA (IA/OCR)
-                <input type="file" id="inputOCR" class="hidden" accept="image/*" onchange="previewOCR(this)">
-            </button>
+                <!-- SMART BUTTONS: OCR & NOVO CRONOGRAMA -->
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button onclick="document.getElementById('inputOCR').click()" class="bg-gray-900 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1">
+                        <i class="fas fa-file-invoice text-emerald-400"></i> IMPORTAR RECEITA (IA/OCR)
+                        <input type="file" id="inputOCR" class="hidden" accept="image/*" onchange="previewOCR(this)">
+                    </button>
+                    <button onclick="abrirModalNovoCronograma()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1">
+                        <i class="fas fa-plus-circle"></i> NOVO CRONOGRAMA
+                    </button>
+                </div>
         </header>
 
         <!-- SELEÇÃO DE DIA DA SEMANA -->
@@ -458,6 +463,121 @@
                 
                 reader.readAsDataURL(file);
             }
+        }
+    </script>
+
+    <!-- MODAL NOVO CRONOGRAMA -->
+    <div id="modalNovoCronograma" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 transform scale-95 transition-all duration-300">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold text-emerald-800">Novo Cronograma Alimentar</h3>
+                <button onclick="fecharModalNovoCronograma()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            
+            <form id="formNovoCronograma" onsubmit="return criarNovoCronograma(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Nome do Plano</label>
+                        <input type="text" name="nomePlano" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Ex: Plano de Emagrecimento">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Data de Início</label>
+                        <input type="date" name="dataInicio" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Objetivo</label>
+                        <select name="objetivo" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                            <option value="">Selecione...</option>
+                            <option value="emagrecimento">Emagrecimento</option>
+                            <option value="ganho_massa">Ganho de Massa</option>
+                            <option value="manutencao">Manutenção</option>
+                            <option value="saude">Saúde Geral</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Observações</label>
+                        <textarea name="observacoes" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Alguma observação especial sobre o plano..."></textarea>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="fecharModalNovoCronograma()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-300 transition">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition">
+                        Criar Plano
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Funções para o modal de novo cronograma
+        function abrirModalNovoCronograma() {
+            const modal = document.getElementById('modalNovoCronograma');
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100', 'pointer-events-auto');
+            modal.querySelector('.transform').classList.remove('scale-95');
+            modal.querySelector('.transform').classList.add('scale-100');
+        }
+
+        function fecharModalNovoCronograma() {
+            const modal = document.getElementById('modalNovoCronograma');
+            modal.querySelector('.transform').classList.remove('scale-100');
+            modal.querySelector('.transform').classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('opacity-0', 'pointer-events-none');
+                modal.classList.remove('opacity-100', 'pointer-events-auto');
+            }, 200);
+        }
+
+        // Função para criar novo cronograma
+        async function criarNovoCronograma(event) {
+            event.preventDefault();
+            
+            const form = event.target;
+            const formData = new FormData(form);
+            
+            const dados = {
+                nomePlano: formData.get('nomePlano'),
+                dataInicio: formData.get('dataInicio'),
+                objetivo: formData.get('objetivo'),
+                observacoes: formData.get('observacoes') || ''
+            };
+
+            try {
+                const response = await fetch('/api/planoalimentar/criar-cronograma', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                });
+
+                const data = await response.json();
+                
+                if (data.sucesso) {
+                    alert(`✅ Cronograma criado com sucesso!\n${data.mensagem}`);
+                    fecharModalNovoCronograma();
+                    form.reset();
+                    
+                    // Recarrega o cronograma ativo
+                    await carregarCronogramaAtivo();
+                } else {
+                    alert(`❌ Erro ao criar cronograma:\n${data.mensagem}`);
+                }
+            } catch (error) {
+                console.error('Erro ao criar cronograma:', error);
+                alert('❌ Erro ao criar cronograma. Verifique sua conexão e tente novamente.');
+            }
+            
+            return false;
         }
     </script>
 
