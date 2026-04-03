@@ -539,49 +539,41 @@ namespace BSFM.Services
         public List<string> DetectarAlimentos(byte[] imageBytes)
         {
             var resultadoFinalPT = new List<string>();
+
+            // Criamos uma versão do Tradutor que IGNOARA letras maiúsculas/minúsculas e hifens/espaços
+            var tradutorOtimizado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach(var item in Tradutor) {
+                tradutorOtimizado[item.Key.Replace("-", " ").Trim()] = item.Value;
+            }
+
             try 
             {
                 if (imageBytes == null || imageBytes.Length == 0) return resultadoFinalPT;
-
                 using var ms = new MemoryStream(imageBytes);
                 using var image = SKImage.FromEncodedData(ms);
                 if (image == null) return resultadoFinalPT;
 
-                // Rodamos a detecção com confiança equilibrada
+                // Rodamos a detecção
                 var results = _yolo.RunObjectDetection(image, 0.22); 
 
+                // Prioridade para o que a IA tem mais certeza
                 var ordenados = results.OrderByDescending(x => x.Confidence).ToList();
 
                 foreach (var r in ordenados)
                 {
-                    // 1. Pegamos o nome da IA (Ex: "apple-pie")
-                    string original = r.Label.Name.Trim().ToLower();
+                    // Normalizamos o que veio da IA: retira v-a-r-i-o-s-h-i-f-e-n-s e espaços
+                    string labelOriginal = r.Label.Name.Replace("-", " ").Replace("_", " ").Trim();
                     
-                    // 2. Criamos uma versão "limpa" para busca: remove hifens, underlines e espaços extras
-                    string buscaLimpa = original.Replace("-", " ").Replace("_", " ").Trim();
-
-                    Console.WriteLine($"[IA BUSCA] Original: '{original}' -> Buscando como: '{buscaLimpa}'");
-
-                    // 3. BUSCA INTELIGENTE: Tentamos achar pela versão original OU pela versão com espaços
-                    string nomeFinal = original;
-
-                    // Se acharmos no dicionário a chave exata
-                    if (Tradutor.ContainsKey(original)) {
-                        nomeFinal = Tradutor[original];
-                    }
-                    // Se não, tentamos achar a versão com espaços (para bater com seu dicionário C#)
-                    else if (Tradutor.ContainsKey(buscaLimpa)) {
-                        nomeFinal = Tradutor[buscaLimpa];
-                    }
-                    // Tenta inverter também (caso o dicionário tenha hífen e a IA mande espaço)
-                    else {
-                        var chaveHifen = buscaLimpa.Replace(" ", "-");
-                        if (Tradutor.ContainsKey(chaveHifen)) nomeFinal = Tradutor[chaveHifen];
-                    }
-
-                    // Adiciona apenas nomes únicos (evita duplicatas no card do Dashboard)
-                    if (!resultadoFinalPT.Any(x => x.Equals(nomeFinal, StringComparison.OrdinalIgnoreCase))) {
-                        resultadoFinalPT.Add(nomeFinal);
+                    // TRADUÇÃO OBRIGATÓRIA:
+                    // Tenta achar no dicionário. Se não achar, não mostra nada (limpa o entulho)
+                    if (tradutorOtimizado.TryGetValue(labelOriginal, out string nomeTraduzido)) {
+                        // Se o nome traduzido ainda não está na lista do prato, adiciona
+                        if (!resultadoFinalPT.Contains(nomeTraduzido)) {
+                            resultadoFinalPT.Add(nomeTraduzido);
+                        }
+                    } else {
+                        // Se for um dos alimentos sem tradução, coloca aqui para sabermos quem é no log
+                        Console.WriteLine($"[AVISO TRADUÇÃO] Não traduzido: '{labelOriginal}'");
                     }
                 }
 

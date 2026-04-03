@@ -172,7 +172,7 @@ app.MapPost("/analisar-prato", async (
         
         if (d != null) 
         {
-            double mult = porcao.ToLower() switch { "pequeno" => 1.5, "medio" => 3.0, "grande" => 5.0, _ => 3.0 };
+            double mult = porcao.ToLower() switch { "pequeno" => 0.75, "medio" => 1.0, "grande" => 1.8, _ => 3.0 };
             caloriasTotal += (d.Calorias100g * mult);
             protTotal += (d.Proteinas100g * mult);
             carbTotal += (d.Carbos100g * mult);
@@ -207,6 +207,7 @@ app.MapPost("/analisar-prato", async (
         // Log para depuração do banco no terminal do Railway
         Console.WriteLine($"[DATABASE ERROR] {ex.Message}");
     }
+    
 
     // Retorna o objeto completo para o site mostrar na tela
     return Results.Ok(new { dados = analiseFinal });
