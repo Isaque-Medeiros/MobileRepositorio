@@ -129,66 +129,68 @@ app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
     return Results.Ok(new { mensagem = "Senha atualizada com sucesso!" });
 });
 // Outras rotas permanecem...
-    app.MapPost("/analisar-prato", async (
-    [FromForm] IFormFile foto,
-    [FromForm] string porcao,
-    [FromForm] int usuarioId,
-    BSFM.Services.YoloInferenceService yolo,
-    BSFM.Services.UsdaNutritionService nutri,
-    PonteBanco.PonteDB db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
-    {
-    // Validação de entrada: Evita erros de referência nula
-    if (foto == null || foto.Length == 0)
-    return Results.BadRequest(new { mensagem = "Nenhuma imagem foi recebida pelo servidor." });
+ app.MapPost("/analisar-prato", async (
+    [FromForm] IFormFile foto, 
+    [FromForm] string porcao, 
+    [FromForm] int usuarioId, 
+    BSFM.Services.YoloInferenceService yolo, 
+    BSFM.Services.UsdaNutritionService nutri, 
+    PonteBanco.PonteDB db) => // Mantido conforme seu print
+{
+    // Validação de entrada: Evita erros se o usuário enviar sem foto
+    if (foto == null || foto.Length == 0) 
+        return Results.BadRequest(new { mensagem = "Nenhuma imagem foi recebida pelo servidor." });
 
     using var ms = new MemoryStream();
     await foto.CopyToAsync(ms);
     var imagemBytes = ms.ToArray();
-
-    // 1. Chamar a IA (Resultado em Português)
+    
+    // 1. Chamar a IA (Esta função no CS deve limpar as aspas agora!)
     var alimentosPt = yolo.DetectarAlimentos(imagemBytes);
 
     Console.WriteLine($"[IA RESULT] Itens encontrados: {(alimentosPt.Any() ? string.Join(", ", alimentosPt) : "NADA")}");
 
     if (alimentosPt == null || alimentosPt.Count == 0) 
     {
-        Console.WriteLine("[IA AVISO] Nenhum alimento detectado na foto.");
-        return Results.Json(new { mensagem = "IA: Não enxerguei comida. Tente focar melhor." }, statusCode: 404);
+        Console.WriteLine("[IA AVISO] Nenhum alimento detectado.");
+        return Results.Json(new { mensagem = "A Inteligência Artificial não conseguiu ver comida. Tente focar melhor e aproximar do prato." }, statusCode: 404);
     }
 
     double caloriasTotal = 0, protTotal = 0, carbTotal = 0, gordTotal = 0;
-    bool aoMenosUmEncontrado = false;
+    bool aoMenosUmSucesso = false;
 
     // 2. Loop para cada alimento detectado
     foreach (var nomePt in alimentosPt)
     {
-        // 2.1 Tradução reversa para busca no USDA (Inglês)
-        // Se o nome não estiver no dicionário (classes novas), enviamos o nome técnico original
+        // 2.1 TRADUÇÃO REVERSA INTELIGENTE (Pega a CHAVE em inglês)
+        // Adicionei um .Trim() para garantir que nenhuma sujeira entre no USDA
         string nomeEn = BSFM.Services.YoloInferenceService.Tradutor
-                        .FirstOrDefault(x => x.Value == nomePt).Key ?? nomePt;
+                        .FirstOrDefault(x => x.Value.Equals(nomePt, StringComparison.OrdinalIgnoreCase)).Key 
+                        ?? nomePt.Replace("'", "").Trim();
 
-        // 2.2 Busca nutricional (Passamos o termo em inglês)
+        // 2.2 Busca nutricional (Ex: "steak")
         var d = await nutri.BuscarNutrientes(nomeEn);
         
         if (d != null) 
         {
-            double mult = porcao.ToLower() switch { "pequeno" => 0.75, "medio" => 1.0, "grande" => 1.8, _ => 3.0 };
+            // Note: Usei a sua escala de porções corrigida (muito melhor para frutas e pratos individuais)
+            double mult = porcao.ToLower() switch { "pequeno" => 0.75, "medio" => 1.0, "grande" => 1.8, _ => 1.0 };
             caloriasTotal += (d.Calorias100g * mult);
             protTotal += (d.Proteinas100g * mult);
             carbTotal += (d.Carbos100g * mult);
             gordTotal += (d.Gorduras100g * mult);
-            aoMenosUmEncontrado = true;
+            aoMenosUmSucesso = true;
         }
         else {
-            Console.WriteLine($"[AVISO USDA] O banco nutricional não retornou dados para: {nomeEn}");
+             Console.WriteLine($"[AVISO USDA] Sem dados para o alimento: {nomeEn}");
         }
     }
 
-    // Se rodou tudo e o USDA não achou nada pra nenhum dos itens detectados
-    if (!aoMenosUmEncontrado)
-        return Results.Json(new { mensagem = $"Detectado: {string.Join(", ", alimentosPt)}, mas o USDA não retornou dados nutricionais." }, statusCode: 404);
+    // Se nenhum item foi achado no banco americano, avisamos o usuário
+    if (!aoMenosUmSucesso)
+        return Results.Json(new { mensagem = $"Não conseguimos dados nutricionais para: {string.Join(", ", alimentosPt)}" }, statusCode: 404);
 
-    // 3. Persistência no Banco (Salva como 1 prato composto por X alimentos)
+    // 3. PERSISTÊNCIA NO POSTGRESQL (A grande vantagem do seu sistema)
     var analiseFinal = new ClassesBSFM.AnaliseIA {
         UsuarioID = usuarioId,
         Alimento = string.Join(", ", alimentosPt),
@@ -204,15 +206,15 @@ app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
         db.AnalisesIA.Add(analiseFinal);
         await db.SaveChangesAsync();
     } catch (Exception ex) {
-        // Log para depuração do banco no terminal do Railway
-        Console.WriteLine($"[DATABASE ERROR] {ex.Message}");
+        Console.WriteLine($"[ERRO BANCO] {ex.Message}");
     }
 
+    return Results.Ok(new { 
+        sucesso = true,
+        dados = analiseFinal 
+    });
 
-    // Retorna o objeto completo para o site mostrar na tela
-    return Results.Ok(new { dados = analiseFinal });
-
-    }).DisableAntiforgery();
+}).DisableAntiforgery();
 
 app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => 
 {

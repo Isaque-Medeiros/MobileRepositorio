@@ -535,45 +535,64 @@ namespace BSFM.Services
             _yolo = new Yolo(options);
             Console.WriteLine($"[IA] Inicializada com o modelo: {modelPath}");
         }
-
+        
         public List<string> DetectarAlimentos(byte[] imageBytes)
         {
             var resultadoFinalPT = new List<string>();
 
-            // Criamos uma versão do Tradutor que IGNOARA letras maiúsculas/minúsculas e hifens/espaços
+            // Criamos o tradutor normalizado uma única vez (Performance)
             var tradutorOtimizado = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach(var item in Tradutor) {
-                tradutorOtimizado[item.Key.Replace("-", " ").Trim()] = item.Value;
+            foreach (var item in Tradutor)
+            {
+                // Garante que as chaves do dicionário também estejam sem hifens e limpas
+                string chaveLimpa = item.Key.Replace("-", " ").Replace("_", " ").Trim();
+                tradutorOtimizado[chaveLimpa] = item.Value;
             }
 
-            try 
+            try
             {
                 if (imageBytes == null || imageBytes.Length == 0) return resultadoFinalPT;
                 using var ms = new MemoryStream(imageBytes);
                 using var image = SKImage.FromEncodedData(ms);
                 if (image == null) return resultadoFinalPT;
 
-                // Rodamos a detecção
-                var results = _yolo.RunObjectDetection(image, 0.22); 
+                // Rodamos a detecção com confiança equilibrada
+                var results = _yolo.RunObjectDetection(image, 0.20); 
 
-                // Prioridade para o que a IA tem mais certeza
                 var ordenados = results.OrderByDescending(x => x.Confidence).ToList();
 
                 foreach (var r in ordenados)
                 {
-                    // Normalizamos o que veio da IA: retira v-a-r-i-o-s-h-i-f-e-n-s e espaços
-                    string labelOriginal = r.Label.Name.Replace("-", " ").Replace("_", " ").Trim();
-                    
-                    // TRADUÇÃO OBRIGATÓRIA:
-                    // Tenta achar no dicionário. Se não achar, não mostra nada (limpa o entulho)
-                    if (tradutorOtimizado.TryGetValue(labelOriginal, out string nomeTraduzido)) {
-                        // Se o nome traduzido ainda não está na lista do prato, adiciona
-                        if (!resultadoFinalPT.Contains(nomeTraduzido)) {
+                    // --- LIMPEZA AGRESSIVA DE CARACTERES ---
+                    // Remove ' (aspas simples), " (aspas duplas), - (hífens), _ (underlines)
+                    string labelSanitizada = r.Label.Name
+                        .Replace("'", "")
+                        .Replace("\"", "")
+                        .Replace("-", " ")
+                        .Replace("_", " ")
+                        .Trim()
+                        .ToLower();
+
+                    Console.WriteLine($"[IA RAW] Recebido: [{r.Label.Name}] -> Sanitizado para: [{labelSanitizada}]");
+
+                    // TENTA TRADUZIR
+                    if (tradutorOtimizado.TryGetValue(labelSanitizada, out string nomeTraduzido))
+                    {
+                        if (!resultadoFinalPT.Contains(nomeTraduzido))
+                        {
                             resultadoFinalPT.Add(nomeTraduzido);
                         }
-                    } else {
-                        // Se for um dos alimentos sem tradução, coloca aqui para sabermos quem é no log
-                        Console.WriteLine($"[AVISO TRADUÇÃO] Não traduzido: '{labelOriginal}'");
+                    }
+                    else
+                    {
+                        // SOLUÇÃO PARA O 'NADA':
+                        // Se a IA detectou um dos 452 alimentos e você ainda não traduziu ele no dicionário,
+                        // vamos ADICIONAR o nome limpo mesmo assim para o sistema não retornar vazio (404).
+                        if (!resultadoFinalPT.Contains(labelSanitizada))
+                        {
+                            resultadoFinalPT.Add(labelSanitizada);
+                        }
+                        Console.WriteLine($"[IA INFO] '{labelSanitizada}' não tem tradução, mas foi incluído.");
                     }
                 }
 
@@ -581,7 +600,7 @@ namespace BSFM.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[IA ERROR] {ex.Message}");
+                Console.WriteLine($"[IA ERROR FATAL] {ex.Message}");
                 return resultadoFinalPT;
             }
         }
