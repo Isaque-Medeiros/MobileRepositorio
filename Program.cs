@@ -134,7 +134,7 @@ app.MapPost("/analisar-prato", async (
     [FromForm] int usuarioId, 
     BSFM.Services.YoloInferenceService yolo, 
     BSFM.Services.UsdaNutritionService nutri, 
-    PonteBanco.DBContext db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
+    PonteBanco.DbContext db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
 {
     // Validação de entrada: Evita erros de referência nula
     if (foto == null || foto.Length == 0) 
