@@ -545,25 +545,27 @@ namespace BSFM.Services
 
                 using var ms = new MemoryStream(imageBytes);
                 using var image = SKImage.FromEncodedData(ms);
-                
                 if (image == null) return resultadoFinalPT;
 
-                // Rodando com 0.10 para vermos TUDO
-                var results = _yolo.RunObjectDetection(image, 0.10);
+                // Rodamos a detecção
+                var results = _yolo.RunObjectDetection(image, 0.17); // Use 0.20 ou 0.25 para mais precisão
 
-                // --- DEBUG: LOG DE TODOS OS NOMES QUE O MODELO DETECTOU SEM FILTRO ---
-                foreach(var res in results) {
-                    Console.WriteLine($"[IA RAW DETECT] Vi item: '{res.Label.Name}' com {res.Confidence * 100}%");
-                }
+                // ORDENAÇÃO: Pegamos os resultados do mais confiável para o menos confiável
+                var ordenados = results.OrderByDescending(x => x.Confidence).ToList();
 
-                // Traduz o que foi achado, e se não tiver tradução, mantém o nome original
-                foreach (var r in results)
+                foreach (var r in ordenados)
                 {
-                    string nomeBruto = r.Label.Name.ToLower();
-                    string nomeTraduzido = Tradutor.ContainsKey(nomeBruto) ? Tradutor[nomeBruto] : nomeBruto;
+                    // Mostra no log do Railway o que ele achou e a certeza (%)
+                    Console.WriteLine($"[IA RAW] Detectado: '{r.Label.Name}' com {Math.Round(r.Confidence * 100, 1)}%");
+
+                    string nomeBruto = r.Label.Name.Trim().ToLower();
+
+                    // TRADUÇÃO: Busca no seu Tradutor de 452 itens
+                    string nomeFinal = Tradutor.ContainsKey(nomeBruto) ? Tradutor[nomeBruto] : nomeBruto;
                     
-                    if (!resultadoFinalPT.Contains(nomeTraduzido)) {
-                        resultadoFinalPT.Add(nomeTraduzido);
+                    // Adicionamos à lista final se ainda não estiver nela (Evita Maçã, Maçã, Maçã...)
+                    if (!resultadoFinalPT.Any(x => x.Equals(nomeFinal, StringComparison.OrdinalIgnoreCase))) {
+                        resultadoFinalPT.Add(nomeFinal);
                     }
                 }
 
@@ -571,7 +573,7 @@ namespace BSFM.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[IA FATAL ERROR] {ex.Message}");
+                Console.WriteLine($"[IA ERROR] {ex.Message}");
                 return resultadoFinalPT;
             }
         }
