@@ -535,7 +535,7 @@ namespace BSFM.Services
             _yolo = new Yolo(options);
             Console.WriteLine($"[IA] Inicializada com o modelo: {modelPath}");
         }
-        
+
         public List<string> DetectarAlimentos(byte[] imageBytes)
         {
             var resultadoFinalPT = new List<string>();
@@ -557,7 +557,7 @@ namespace BSFM.Services
                 if (image == null) return resultadoFinalPT;
 
                 // Rodamos a detecção com confiança equilibrada
-                var results = _yolo.RunObjectDetection(image, 0.20); 
+                var results = _yolo.RunObjectDetection(image, 0.16); 
 
                 var ordenados = results.OrderByDescending(x => x.Confidence).ToList();
 
