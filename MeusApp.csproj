@@ -24,6 +24,10 @@
     <Content Include="*.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <!-- Garante que os modelos de IA sejam levados para o servidor do Railway -->
+    <None Update="Models\bsfmv1_yolo.onnx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Models\yolov10n.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
