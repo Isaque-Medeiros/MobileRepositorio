@@ -547,23 +547,39 @@ namespace BSFM.Services
                 using var image = SKImage.FromEncodedData(ms);
                 if (image == null) return resultadoFinalPT;
 
-                // Rodamos a detecção
-                var results = _yolo.RunObjectDetection(image, 0.17); // Use 0.20 ou 0.25 para mais precisão
+                // Rodamos a detecção com confiança equilibrada
+                var results = _yolo.RunObjectDetection(image, 0.22); 
 
-                // ORDENAÇÃO: Pegamos os resultados do mais confiável para o menos confiável
                 var ordenados = results.OrderByDescending(x => x.Confidence).ToList();
 
                 foreach (var r in ordenados)
                 {
-                    // Mostra no log do Railway o que ele achou e a certeza (%)
-                    Console.WriteLine($"[IA RAW] Detectado: '{r.Label.Name}' com {Math.Round(r.Confidence * 100, 1)}%");
-
-                    string nomeBruto = r.Label.Name.Trim().ToLower();
-
-                    // TRADUÇÃO: Busca no seu Tradutor de 452 itens
-                    string nomeFinal = Tradutor.ContainsKey(nomeBruto) ? Tradutor[nomeBruto] : nomeBruto;
+                    // 1. Pegamos o nome da IA (Ex: "apple-pie")
+                    string original = r.Label.Name.Trim().ToLower();
                     
-                    // Adicionamos à lista final se ainda não estiver nela (Evita Maçã, Maçã, Maçã...)
+                    // 2. Criamos uma versão "limpa" para busca: remove hifens, underlines e espaços extras
+                    string buscaLimpa = original.Replace("-", " ").Replace("_", " ").Trim();
+
+                    Console.WriteLine($"[IA BUSCA] Original: '{original}' -> Buscando como: '{buscaLimpa}'");
+
+                    // 3. BUSCA INTELIGENTE: Tentamos achar pela versão original OU pela versão com espaços
+                    string nomeFinal = original;
+
+                    // Se acharmos no dicionário a chave exata
+                    if (Tradutor.ContainsKey(original)) {
+                        nomeFinal = Tradutor[original];
+                    }
+                    // Se não, tentamos achar a versão com espaços (para bater com seu dicionário C#)
+                    else if (Tradutor.ContainsKey(buscaLimpa)) {
+                        nomeFinal = Tradutor[buscaLimpa];
+                    }
+                    // Tenta inverter também (caso o dicionário tenha hífen e a IA mande espaço)
+                    else {
+                        var chaveHifen = buscaLimpa.Replace(" ", "-");
+                        if (Tradutor.ContainsKey(chaveHifen)) nomeFinal = Tradutor[chaveHifen];
+                    }
+
+                    // Adiciona apenas nomes únicos (evita duplicatas no card do Dashboard)
                     if (!resultadoFinalPT.Any(x => x.Equals(nomeFinal, StringComparison.OrdinalIgnoreCase))) {
                         resultadoFinalPT.Add(nomeFinal);
                     }
