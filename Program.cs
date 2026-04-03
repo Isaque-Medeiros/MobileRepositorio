@@ -134,29 +134,37 @@ app.MapPost("/analisar-prato", async (
     [FromForm] int usuarioId, 
     BSFM.Services.YoloInferenceService yolo, 
     BSFM.Services.UsdaNutritionService nutri, 
-    PonteBanco.PonteDB db) => 
+    PonteBanco.BSFMContext db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
 {
+    // Validação de entrada: Evita erros de referência nula
+    if (foto == null || foto.Length == 0) 
+        return Results.BadRequest(new { mensagem = "Nenhuma imagem foi recebida pelo servidor." });
+
     using var ms = new MemoryStream();
     await foto.CopyToAsync(ms);
+    var imagemBytes = ms.ToArray();
     
-    // 1. Chamar a IA (Este método já devolve em Português: "Cenoura", "Maçã"...)
-    var alimentosPt = yolo.DetectarAlimentos(ms.ToArray());
+    // 1. Chamar a IA (Resultado em Português)
+    var alimentosPt = yolo.DetectarAlimentos(imagemBytes);
 
-    if (alimentosPt.Count == 0) 
-        return Results.NotFound(new { mensagem = "Não identifiquei alimentos no prato." });
+    // Se a IA não vir nada, retorna 404 com explicação
+    if (alimentosPt == null || alimentosPt.Count == 0) 
+        return Results.Json(new { mensagem = "IA: Não identifiquei nenhum dos 452 alimentos treinados nesta foto." }, statusCode: 404);
 
     double caloriasTotal = 0, protTotal = 0, carbTotal = 0, gordTotal = 0;
+    bool aoMenosUmEncontrado = false;
 
     // 2. Loop para cada alimento detectado
     foreach (var nomePt in alimentosPt)
     {
-        // 2.1 TRADUÇÃO REVERSA: Precisamos do nome em Inglês para a API do USDA entender!
-        // Procuramos no seu dicionário o nome original em inglês (Key) usando o nome em PT (Value)
+        // 2.1 Tradução reversa para busca no USDA (Inglês)
+        // Se o nome não estiver no dicionário (classes novas), enviamos o nome técnico original
         string nomeEn = BSFM.Services.YoloInferenceService.Tradutor
                         .FirstOrDefault(x => x.Value == nomePt).Key ?? nomePt;
 
-        // 2.2 Busca nutricional com o nome original em INGLÊS (Ex: carrot)
+        // 2.2 Busca nutricional (Passamos o termo em inglês)
         var d = await nutri.BuscarNutrientes(nomeEn);
+        
         if (d != null) 
         {
             double mult = porcao.ToLower() switch { "pequeno" => 1.5, "medio" => 3.0, "grande" => 5.0, _ => 3.0 };
@@ -164,13 +172,21 @@ app.MapPost("/analisar-prato", async (
             protTotal += (d.Proteinas100g * mult);
             carbTotal += (d.Carbos100g * mult);
             gordTotal += (d.Gorduras100g * mult);
+            aoMenosUmEncontrado = true;
+        }
+        else {
+             Console.WriteLine($"[AVISO USDA] O banco nutricional não retornou dados para: {nomeEn}");
         }
     }
 
-    // 3. Criar registro final com a lista de alimentos em PORTUGUÊS para o Banco
+    // Se rodou tudo e o USDA não achou nada pra nenhum dos itens detectados
+    if (!aoMenosUmEncontrado)
+        return Results.Json(new { mensagem = $"Detectado: {string.Join(", ", alimentosPt)}, mas o USDA não retornou dados nutricionais." }, statusCode: 404);
+
+    // 3. Persistência no Banco (Salva como 1 prato composto por X alimentos)
     var analiseFinal = new ClassesBSFM.AnaliseIA {
         UsuarioID = usuarioId,
-        Alimento = string.Join(", ", alimentosPt), // Salva como "Cenoura, Brócolis"
+        Alimento = string.Join(", ", alimentosPt),
         Porcao = porcao,
         Calorias = Math.Round(caloriasTotal, 2),
         Proteinas = Math.Round(protTotal, 2),
@@ -183,10 +199,13 @@ app.MapPost("/analisar-prato", async (
         db.AnalisesIA.Add(analiseFinal);
         await db.SaveChangesAsync();
     } catch (Exception ex) {
-        Console.WriteLine($"[AVISO BANCO] Erro ao salvar análise: {ex.Message}");
+        // Log para depuração do banco no terminal do Railway
+        Console.WriteLine($"[DATABASE ERROR] {ex.Message}");
     }
 
+    // Retorna o objeto completo para o site mostrar na tela
     return Results.Ok(new { dados = analiseFinal });
+
 }).DisableAntiforgery();
 
 app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => 
