@@ -550,7 +550,7 @@ namespace BSFM.Services
                 if (image == null) return resultadoFinalPT;
 
                 // Executa a detecção oficial
-                var results = _yolo.RunObjectDetection(image, 0.35);
+                var results = _yolo.RunObjectDetection(image, 0.10);
 
                 // 1. Filtrar o que foi detectado no dataset original (nomes em Inglês)
                 var detectadosIngles = results
