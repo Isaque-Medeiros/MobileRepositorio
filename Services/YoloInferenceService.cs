@@ -539,7 +539,6 @@ namespace BSFM.Services
         public List<string> DetectarAlimentos(byte[] imageBytes)
         {
             var resultadoFinalPT = new List<string>();
-
             try 
             {
                 if (imageBytes == null || imageBytes.Length == 0) return resultadoFinalPT;
@@ -549,34 +548,30 @@ namespace BSFM.Services
                 
                 if (image == null) return resultadoFinalPT;
 
-                // Executa a detecção oficial
+                // Rodando com 0.10 para vermos TUDO
                 var results = _yolo.RunObjectDetection(image, 0.10);
 
-                // 1. Filtrar o que foi detectado no dataset original (nomes em Inglês)
-                var detectadosIngles = results
-                    .Where(r => AlimentosPermitidos.Contains(r.Label.Name.ToLower()))
-                    .Select(r => r.Label.Name.ToLower())
-                    .Distinct()
-                    .ToList();
-
-                // 2. Tradução para Português
-                foreach (var nomeEn in detectadosIngles)
-                {
-                    // Busca no dicionário, se não achar (muito difícil) mantém o original
-                    string nomePt = Tradutor.ContainsKey(nomeEn) ? Tradutor[nomeEn] : nomeEn;
-                    resultadoFinalPT.Add(nomePt);
+                // --- DEBUG: LOG DE TODOS OS NOMES QUE O MODELO DETECTOU SEM FILTRO ---
+                foreach(var res in results) {
+                    Console.WriteLine($"[IA RAW DETECT] Vi item: '{res.Label.Name}' com {res.Confidence * 100}%");
                 }
 
-                if (resultadoFinalPT.Any())
+                // Traduz o que foi achado, e se não tiver tradução, mantém o nome original
+                foreach (var r in results)
                 {
-                    Console.WriteLine($"[IA SUCCESS] Traduzidos: {string.Join(", ", resultadoFinalPT)}");
+                    string nomeBruto = r.Label.Name.ToLower();
+                    string nomeTraduzido = Tradutor.ContainsKey(nomeBruto) ? Tradutor[nomeBruto] : nomeBruto;
+                    
+                    if (!resultadoFinalPT.Contains(nomeTraduzido)) {
+                        resultadoFinalPT.Add(nomeTraduzido);
+                    }
                 }
 
                 return resultadoFinalPT;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[IA FATAL ERROR] Falha técnica: {ex.Message}");
+                Console.WriteLine($"[IA FATAL ERROR] {ex.Message}");
                 return resultadoFinalPT;
             }
         }
