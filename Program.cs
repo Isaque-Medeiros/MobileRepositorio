@@ -129,22 +129,22 @@ app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
     return Results.Ok(new { mensagem = "Senha atualizada com sucesso!" });
 });
 // Outras rotas permanecem...
-app.MapPost("/analisar-prato", async (
-    [FromForm] IFormFile foto, 
-    [FromForm] string porcao, 
-    [FromForm] int usuarioId, 
-    BSFM.Services.YoloInferenceService yolo, 
-    BSFM.Services.UsdaNutritionService nutri, 
+    app.MapPost("/analisar-prato", async (
+    [FromForm] IFormFile foto,
+    [FromForm] string porcao,
+    [FromForm] int usuarioId,
+    BSFM.Services.YoloInferenceService yolo,
+    BSFM.Services.UsdaNutritionService nutri,
     PonteBanco.PonteDB db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
-{
+    {
     // Validação de entrada: Evita erros de referência nula
-    if (foto == null || foto.Length == 0) 
-        return Results.BadRequest(new { mensagem = "Nenhuma imagem foi recebida pelo servidor." });
+    if (foto == null || foto.Length == 0)
+    return Results.BadRequest(new { mensagem = "Nenhuma imagem foi recebida pelo servidor." });
 
     using var ms = new MemoryStream();
     await foto.CopyToAsync(ms);
     var imagemBytes = ms.ToArray();
-    
+
     // 1. Chamar a IA (Resultado em Português)
     var alimentosPt = yolo.DetectarAlimentos(imagemBytes);
 
@@ -180,7 +180,7 @@ app.MapPost("/analisar-prato", async (
             aoMenosUmEncontrado = true;
         }
         else {
-             Console.WriteLine($"[AVISO USDA] O banco nutricional não retornou dados para: {nomeEn}");
+            Console.WriteLine($"[AVISO USDA] O banco nutricional não retornou dados para: {nomeEn}");
         }
     }
 
@@ -207,12 +207,12 @@ app.MapPost("/analisar-prato", async (
         // Log para depuração do banco no terminal do Railway
         Console.WriteLine($"[DATABASE ERROR] {ex.Message}");
     }
-    
+
 
     // Retorna o objeto completo para o site mostrar na tela
     return Results.Ok(new { dados = analiseFinal });
 
-}).DisableAntiforgery();
+    }).DisableAntiforgery();
 
 app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => 
 {
