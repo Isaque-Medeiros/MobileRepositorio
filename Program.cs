@@ -32,9 +32,10 @@ builder.Services.AddDbContext<PonteDB>();
 
 var app = builder.Build();
 using (var scope = app.Services.CreateScope()) {
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+    // AQUI: Mude para PonteDB
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>(); 
     Console.WriteLine("[POSTGRES] Garantindo criação de tabelas...");
-    db.Database.EnsureCreated(); // Isso vai criar 'analises_ia' forçadamente agora.
+    db.Database.EnsureCreated();
 }
 
 app.UseCors("PermitirSite");
@@ -134,7 +135,7 @@ app.MapPost("/analisar-prato", async (
     [FromForm] int usuarioId, 
     BSFM.Services.YoloInferenceService yolo, 
     BSFM.Services.UsdaNutritionService nutri, 
-    PonteBanco.DbContext db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
+    PonteBanco.PonteDB db) => // Note: Mude para BSFMContext se esse for o nome no seu PonteDB.cs
 {
     // Validação de entrada: Evita erros de referência nula
     if (foto == null || foto.Length == 0) 
