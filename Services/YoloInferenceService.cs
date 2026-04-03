@@ -522,7 +522,7 @@ namespace BSFM.Services
 
         public YoloInferenceService()
         {
-            var modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "bsfmv1_yolo.onnx");
+            var modelPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Models", "bsfmv1_yolo_final.onnx");
 
             var options = new YoloOptions
             {
