@@ -148,9 +148,13 @@ app.MapPost("/analisar-prato", async (
     // 1. Chamar a IA (Resultado em Português)
     var alimentosPt = yolo.DetectarAlimentos(imagemBytes);
 
-    // Se a IA não vir nada, retorna 404 com explicação
+    Console.WriteLine($"[IA RESULT] Itens encontrados: {(alimentosPt.Any() ? string.Join(", ", alimentosPt) : "NADA")}");
+
     if (alimentosPt == null || alimentosPt.Count == 0) 
-        return Results.Json(new { mensagem = "IA: Não identifiquei nenhum dos 452 alimentos treinados nesta foto." }, statusCode: 404);
+    {
+        Console.WriteLine("[IA AVISO] Nenhum alimento detectado na foto.");
+        return Results.Json(new { mensagem = "IA: Não enxerguei comida. Tente focar melhor." }, statusCode: 404);
+    }
 
     double caloriasTotal = 0, protTotal = 0, carbTotal = 0, gordTotal = 0;
     bool aoMenosUmEncontrado = false;
