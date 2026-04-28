@@ -15,8 +15,8 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração da Porta para o Vercel (usa a variável PORT fornecida pela plataforma)
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+// Configuração da Porta para o Render (usa a variável PORT fornecida pela plataforma)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 Console.WriteLine($"[INIT] Iniciando servidor na porta {port}");
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
@@ -32,11 +32,38 @@ builder.Services.AddHttpClient<BSFM.Services.UsdaNutritionService>();
 builder.Services.AddDbContext<PonteDB>();
 
 var app = builder.Build();
+
+// Tenta conectar ao banco com retry (importante para o Render que pode demorar)
 using (var scope = app.Services.CreateScope()) {
-    // AQUI: Mude para PonteDB
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>(); 
-    Console.WriteLine("[POSTGRES] Garantindo criação de tabelas...");
-    db.Database.EnsureCreated();
+    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+    Console.WriteLine("[POSTGRES] Tentando conectar ao banco de dados...");
+    
+    int tentativas = 0;
+    int maxTentativas = 5;
+    while (tentativas < maxTentativas)
+    {
+        try
+        {
+            db.Database.EnsureCreated();
+            Console.WriteLine("[POSTGRES] Banco de dados conectado e tabelas criadas com sucesso!");
+            break;
+        }
+        catch (Exception ex)
+        {
+            tentativas++;
+            Console.WriteLine($"[POSTGRES] Tentativa {tentativas}/{maxTentativas} falhou: {ex.Message}");
+            if (tentativas < maxTentativas)
+            {
+                Console.WriteLine("[POSTGRES] Aguardando 5 segundos para nova tentativa...");
+                Thread.Sleep(5000);
+            }
+            else
+            {
+                Console.WriteLine("[POSTGRES] ERRO CRÍTICO: Não foi possível conectar ao banco após todas as tentativas.");
+                Console.WriteLine("[POSTGRES] O servidor vai iniciar mesmo assim. As funcionalidades que dependem de banco podem falhar.");
+            }
+        }
+    }
 }
 
 app.UseCors("PermitirSite");
