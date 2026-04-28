@@ -37,12 +37,15 @@ namespace PonteBanco
                     var databaseUri = new Uri(connectionUrl);
                     var userInfo = databaseUri.UserInfo.Split(':');
 
+                    // CORREÇÃO: Se a porta for -1 (URL sem porta explícita), usa 5432 (padrão PostgreSQL)
+                    var port = databaseUri.Port > 0 ? databaseUri.Port : 5432;
+
                     // Verifica se a URL já contém sslmode (comum no Neon)
                     var sslMode = connectionUrl.Contains("sslmode=require") ? "Require" : "Require";
                     var trustCert = connectionUrl.Contains("sslmode=require") ? "true" : "true";
 
                     var connectionString = $"Host={databaseUri.Host};" +
-                                           $"Port={databaseUri.Port};" +
+                                           $"Port={port};" +
                                            $"Username={userInfo[0]};" +
                                            $"Password={userInfo[1]};" +
                                            $"Database={databaseUri.LocalPath.TrimStart('/')};" +
@@ -55,7 +58,10 @@ namespace PonteBanco
                 catch 
                 {
                     // Plano de reserva se a URL estiver em formato simples
-                    var fallbackString = connectionUrl.Replace("postgres://", "postgresql://");
+                    // Remove o -pooler do hostname se presente (Neon)
+                    var fallbackString = connectionUrl
+                        .Replace("postgres://", "postgresql://")
+                        .Replace("-pooler", ""); // Remove pooler que causa problemas
                     options.UseNpgsql(fallbackString);
                 }
             }

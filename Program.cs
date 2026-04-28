@@ -94,82 +94,117 @@ app.MapGet("/", (IWebHostEnvironment env) =>
 // --- SUAS ROTAS DE API ---
 
 app.MapPost("/solicitar-codigo", (SolicitacaoEmail req) => {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
-    var email = req.Email.Trim().ToLower();
-    
-    if (db.Usuarios.AsNoTracking().Any(u => u.Email.ToLower() == email))
-        return Results.Json(new { mensagem = "E-mail já cadastrado!" }, statusCode: 400);
+    try {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+        var email = req.Email.Trim().ToLower();
+        
+        if (db.Usuarios.AsNoTracking().Any(u => u.Email.ToLower() == email))
+            return Results.Json(new { mensagem = "E-mail já cadastrado!" }, statusCode: 400);
 
-    // 2. Gera o Token de 6 dígitos
-    string token = new Random().Next(100000, 999999).ToString();
+        // 2. Gera o Token de 6 dígitos
+        string token = new Random().Next(100000, 999999).ToString();
 
-    // 3. CHAMA O SERVIÇO DE E-MAIL (Aqui ele envia para o Mailtrap)
-    EmailService.EnviarToken(email, token);
-    return Results.Ok(new { mensagem = "Código enviado!", tokenParaJs = token });
+        // 3. CHAMA O SERVIÇO DE E-MAIL (Aqui ele envia para o Mailtrap)
+        EmailService.EnviarToken(email, token);
+        return Results.Ok(new { mensagem = "Código enviado!", tokenParaJs = token });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /solicitar-codigo: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados. Verifique se a variável DATABASE_URL está configurada no Render." }, statusCode: 500);
+    }
 });
 
 app.MapPost("/cadastrar-usuario-final", (Usuario usuarioVindoDoJs) => {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
-    // Cuidado: Certifique-se que o pacote BCrypt.Net-Next está no .csproj
-    usuarioVindoDoJs.SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioVindoDoJs.SenhaHash);
-    usuarioVindoDoJs.EmailVerificado = true; 
-    new CalcularNutricional().RegistrarCalculos(usuarioVindoDoJs);
-    db.Usuarios.Add(usuarioVindoDoJs);
-    db.SaveChanges();
-    return Results.Ok(new { mensagem = "Perfil Criado!" });
+    try {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+        // Cuidado: Certifique-se que o pacote BCrypt.Net-Next está no .csproj
+        usuarioVindoDoJs.SenhaHash = BCrypt.Net.BCrypt.HashPassword(usuarioVindoDoJs.SenhaHash);
+        usuarioVindoDoJs.EmailVerificado = true; 
+        new CalcularNutricional().RegistrarCalculos(usuarioVindoDoJs);
+        db.Usuarios.Add(usuarioVindoDoJs);
+        db.SaveChanges();
+        return Results.Ok(new { mensagem = "Perfil Criado!" });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /cadastrar-usuario-final: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 app.MapPost("/login", (LoginDTO dadosLogin) => {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
-    var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == dadosLogin.Email.Trim().ToLower());
-    if (user != null && BCrypt.Net.BCrypt.Verify(dadosLogin.Senha, user.SenhaHash)) {
-        return Results.Ok(new { id = user.ID, nome = user.Nome, imc = user.IMC, tmb = user.TMB, gasto = user.GastoTotal }); 
+    try {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+        var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == dadosLogin.Email.Trim().ToLower());
+        if (user != null && BCrypt.Net.BCrypt.Verify(dadosLogin.Senha, user.SenhaHash)) {
+            return Results.Ok(new { id = user.ID, nome = user.Nome, imc = user.IMC, tmb = user.TMB, gasto = user.GastoTotal }); 
+        }
+        return Results.Json(new { mensagem = "E-mail ou senha incorretos." }, statusCode: 400);
     }
-    return Results.Json(new { mensagem = "E-mail ou senha incorretos." }, statusCode: 400);
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /login: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 // --- ROTA: ESQUECI MINHA SENHA (PASSO 1) ---
 app.MapPost("/esqueci-senha", (EsqueceuSenhaDTO req) => {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
-    var email = req.Email.Trim().ToLower();
+    try {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+        var email = req.Email.Trim().ToLower();
 
-    // 1. Verifica se o usuário existe
-    var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == email);
-    if (user == null)
-        return Results.Json(new { mensagem = "E-mail não encontrado em nossa base." }, statusCode: 404);
+        // 1. Verifica se o usuário existe
+        var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == email);
+        if (user == null)
+            return Results.Json(new { mensagem = "E-mail não encontrado em nossa base." }, statusCode: 404);
 
-    // 2. Gera o Token de 6 dígitos
-    string token = new Random().Next(100000, 999999).ToString();
+        // 2. Gera o Token de 6 dígitos
+        string token = new Random().Next(100000, 999999).ToString();
 
-    // 3. CHAMA O SERVIÇO DE E-MAIL (Aqui ele envia para o Mailtrap)
-    EmailService.EnviarToken(email, token);
+        // 3. CHAMA O SERVIÇO DE E-MAIL (Aqui ele envia para o Mailtrap)
+        EmailService.EnviarToken(email, token);
 
-    // 4. Retorna para o JS para que ele possa comparar o token depois
-    return Results.Ok(new { mensagem = "Código enviado com sucesso!", tokenParaJs = token });
+        // 4. Retorna para o JS para que ele possa comparar o token depois
+        return Results.Ok(new { mensagem = "Código enviado com sucesso!", tokenParaJs = token });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /esqueci-senha: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 // --- ROTA: REDEFINIR SENHA (PASSO 2 - FINAL) ---
 app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
-    var email = req.Email.Trim().ToLower();
+    try {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
+        var email = req.Email.Trim().ToLower();
 
-    // 1. Localiza o usuário
-    var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == email);
-    if (user == null)
-        return Results.Json(new { mensagem = "Usuário não identificado." }, statusCode: 404);
+        // 1. Localiza o usuário
+        var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == email);
+        if (user == null)
+            return Results.Json(new { mensagem = "Usuário não identificado." }, statusCode: 404);
 
-    // 2. Criptografa a nova senha e salva
-    user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(req.NovaSenha);
-    
-    db.Usuarios.Update(user);
-    db.SaveChanges();
+        // 2. Criptografa a nova senha e salva
+        user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(req.NovaSenha);
+        
+        db.Usuarios.Update(user);
+        db.SaveChanges();
 
-    return Results.Ok(new { mensagem = "Senha atualizada com sucesso!" });
+        return Results.Ok(new { mensagem = "Senha atualizada com sucesso!" });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /redefinir-senha: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 // Outras rotas permanecem...
  app.MapPost("/analisar-prato", async (
@@ -261,52 +296,80 @@ app.MapPost("/redefinir-senha", (RedefinicaoSenhaDTO req) => {
 
 app.MapGet("/historico-analises/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => 
 {
-    var historico = await db.AnalisesIA
-        .Where(a => a.UsuarioID == usuarioId)
-        .OrderByDescending(a => a.DataAnalise)
-        .ToListAsync();
+    try {
+        var historico = await db.AnalisesIA
+            .Where(a => a.UsuarioID == usuarioId)
+            .OrderByDescending(a => a.DataAnalise)
+            .ToListAsync();
 
-    return Results.Ok(historico);
+        return Results.Ok(historico);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /historico-analises: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 app.MapGet("/evolucao/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
-    var logs = await db.Historicos
-        .Where(h => h.UsuarioID == usuarioId)
-        .OrderByDescending(h => h.DataRegistro)
-        .ToListAsync();
-    return Results.Ok(logs);
+    try {
+        var logs = await db.Historicos
+            .Where(h => h.UsuarioID == usuarioId)
+            .OrderByDescending(h => h.DataRegistro)
+            .ToListAsync();
+        return Results.Ok(logs);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /evolucao: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 // ROTA: Registrar nova medição (Peso/Altura)
 app.MapPost("/atualizar-medicao", async (HistoricoProgresso novaMedicao, PonteBanco.PonteDB db) => {
-    // 1. Calcula o IMC para o histórico
-    novaMedicao.IMC = Math.Round(novaMedicao.Peso / (novaMedicao.Altura * novaMedicao.Altura), 2);
-    novaMedicao.DataRegistro = DateTime.Now;
+    try {
+        // 1. Calcula o IMC para o histórico
+        novaMedicao.IMC = Math.Round(novaMedicao.Peso / (novaMedicao.Altura * novaMedicao.Altura), 2);
+        novaMedicao.DataRegistro = DateTime.Now;
 
-    // 2. Salva no Histórico
-    db.Historicos.Add(novaMedicao);
+        // 2. Salva no Histórico
+        db.Historicos.Add(novaMedicao);
 
-    // 3. Importante: Atualiza o peso/altura atual na tabela de Usuario também (para o dashboard mudar)
-    var user = await db.Usuarios.FindAsync(novaMedicao.UsuarioID);
-    if (user != null) {
-        user.Peso = novaMedicao.Peso;
-        user.Altura = novaMedicao.Altura;
-        new CalcularNutricional().RegistrarCalculos(user); // Recalcula IMC/TMB/Gasto
-        db.Usuarios.Update(user);
+        // 3. Importante: Atualiza o peso/altura atual na tabela de Usuario também (para o dashboard mudar)
+        var user = await db.Usuarios.FindAsync(novaMedicao.UsuarioID);
+        if (user != null) {
+            user.Peso = novaMedicao.Peso;
+            user.Altura = novaMedicao.Altura;
+            new CalcularNutricional().RegistrarCalculos(user); // Recalcula IMC/TMB/Gasto
+            db.Usuarios.Update(user);
+        }
+
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Medição registrada!", imc = novaMedicao.IMC, userAtualizado = user });
     }
-
-    await db.SaveChangesAsync();
-    return Results.Ok(new { mensagem = "Medição registrada!", imc = novaMedicao.IMC, userAtualizado = user });
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /atualizar-medicao: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 app.MapPost("/definir-meta", async (MetaDTO dados, PonteBanco.PonteDB db) => {
-    var user = await db.Usuarios.FindAsync(dados.UsuarioId);
-    if (user == null) return Results.NotFound();
-    
-    user.PesoMeta = dados.PesoMeta;
-    await db.SaveChangesAsync();
-    
-    return Results.Ok(new { pesoMeta = user.PesoMeta });
+    try {
+        var user = await db.Usuarios.FindAsync(dados.UsuarioId);
+        if (user == null) return Results.NotFound();
+        
+        user.PesoMeta = dados.PesoMeta;
+        await db.SaveChangesAsync();
+        
+        return Results.Ok(new { pesoMeta = user.PesoMeta });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /definir-meta: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao conectar com o banco de dados." }, statusCode: 500);
+    }
 });
 
 app.Run(); // FINAL DO ARQUIVO
