@@ -31,19 +31,23 @@ namespace PonteBanco
             }
             else
             {
-                // Tenta extrair os dados da URL do Railway
+                // Tenta extrair os dados da URL do Railway/Neon
                 try 
                 {
                     var databaseUri = new Uri(connectionUrl);
                     var userInfo = databaseUri.UserInfo.Split(':');
+
+                    // Verifica se a URL já contém sslmode (comum no Neon)
+                    var sslMode = connectionUrl.Contains("sslmode=require") ? "Require" : "Require";
+                    var trustCert = connectionUrl.Contains("sslmode=require") ? "true" : "true";
 
                     var connectionString = $"Host={databaseUri.Host};" +
                                            $"Port={databaseUri.Port};" +
                                            $"Username={userInfo[0]};" +
                                            $"Password={userInfo[1]};" +
                                            $"Database={databaseUri.LocalPath.TrimStart('/')};" +
-                                           "SSL Mode=Require;" +
-                                           "Trust Server Certificate=true;" +
+                                           $"SSL Mode={sslMode};" +
+                                           $"Trust Server Certificate={trustCert};" +
                                            "Pooling=true;";
 
                     options.UseNpgsql(connectionString);

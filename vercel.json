@@ -1,0 +1,7 @@
+{
+  "buildCommand": "docker build -t meusapp .",
+  "outputDirectory": "/app/publish",
+  "docker": {
+    "image": "mcr.microsoft.com/dotnet/aspnet:8.0"
+  }
+}

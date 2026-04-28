@@ -10,13 +10,14 @@ using Microsoft.AspNetCore.Http;
 using System.IO;
 using Microsoft.AspNetCore.Mvc;
 
-// Correção para trabalhar com datas no PostgreSQL (comum no Railway)
+// Correção para trabalhar com datas no PostgreSQL (comum no Railway/Neon)
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configuração da Porta para o Railway
+// Configuração da Porta para o Vercel (usa a variável PORT fornecida pela plataforma)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+Console.WriteLine($"[INIT] Iniciando servidor na porta {port}");
 builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
 
 // Configurações de Serviços
