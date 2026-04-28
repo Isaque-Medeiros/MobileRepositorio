@@ -8,9 +8,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
-        .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        :root { --bg: #000000; --bg-card: #1a1a1a; --text: #f1f5f9; --text-secondary: #94a3b8; --border: rgba(51,65,85,0.6); }
+        .light-mode { --bg: #f8fafc; --bg-card: rgba(255,255,255,0.9); --text: #1e293b; --text-secondary: #64748b; --border: rgba(226,232,240,0.8); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: all 0.3s; }
+        .glass-card { background: var(--bg-card); backdrop-filter: blur(10px); border: 1px solid var(--border); border-radius: 1.5rem; padding: 1.5rem; transition: all 0.3s; }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -10px rgba(16,185,129,0.12); }
         .tab-diario { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .theme-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s ease; }
+        .theme-btn:hover { transform: translateY(-2px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 10px; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -19,28 +27,28 @@
         <!-- Header -->
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="p-3 bg-white rounded-xl shadow-sm text-gray-500 hover:text-emerald-600 transition">
+                <a href="dashboard.html" class="p-3 rounded-xl transition" style="background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border);">
                     <i class="fas fa-chevron-left"></i>
                 </a>
-                <h1 class="text-2xl font-bold text-gray-800">Meu <span class="text-emerald-600">Diário IA</span></h1>
+                <h1 class="text-2xl font-bold" style="color: var(--text);">Meu <span class="text-emerald-500">Diário IA</span></h1>
             </div>
-            <div class="text-right">
-                <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">Resumo 48h</p>
-                <div id="countRegistros" class="text-emerald-600 font-bold">0 refeições</div>
+            <div class="flex items-center gap-3">
+                <button onclick="toggleTheme()" class="theme-btn"><i id="themeIcon" class="fas fa-sun"></i></button>
+                <div class="text-right">
+                    <p class="text-[10px] uppercase font-bold tracking-widest" style="color: var(--text-secondary);">Resumo 48h</p>
+                    <div id="countRegistros" class="text-emerald-500 font-bold">0 refeições</div>
+                </div>
             </div>
         </div>
 
         <!-- Alerta de Limpeza -->
-        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 flex gap-3 items-center">
-            <i class="fas fa-history text-amber-500"></i>
-            <p class="text-xs text-amber-700 leading-snug">
-                Registros são mantidos por <strong>2 dias</strong> para priorizar seu foco nos objetivos recentes.
-            </p>
+        <div class="rounded-2xl p-4 mb-6 flex gap-3 items-center" style="background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.3);">
+            <i class="fas fa-history" style="color: #f59e0b;"></i>
+            <p class="text-xs" style="color: #f59e0b;">Registros são mantidos por <strong>2 dias</strong> para priorizar seu foco nos objetivos recentes.</p>
         </div>
 
         <!-- Lista de Cards -->
         <div id="listaDiario" class="space-y-4">
-            <!-- Loader inicial -->
             <div class="text-center py-20">
                 <i class="fas fa-circle-notch animate-spin text-3xl text-emerald-500"></i>
             </div>
@@ -48,9 +56,28 @@
     </div>
 
     <script>
-        // URL da API - backend no Render
         const API_URL = 'https://bsfm-back-end.onrender.com';
         const userData = JSON.parse(localStorage.getItem('usuarioLogado'));
+
+        // ====== TEMA ======
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('light-mode')) {
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('bsfmTheme', 'light');
+            } else {
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('bsfmTheme', 'dark');
+            }
+        }
+        if (localStorage.getItem('bsfmTheme') !== 'light') {
+            document.body.classList.remove('light-mode');
+            document.getElementById('themeIcon').className = 'fas fa-sun';
+        } else {
+            document.body.classList.add('light-mode');
+            document.getElementById('themeIcon').className = 'fas fa-moon';
+        }
 
         async function carregarDiario() {
             if(!userData) { window.location.href = 'login.html'; return; }
@@ -64,10 +91,10 @@
                 
                 if (dados.length === 0) {
                     container.innerHTML = `
-                        <div class="bg-white rounded-3xl p-10 text-center shadow-sm border border-dashed border-gray-200">
-                            <i class="fas fa-utensils text-gray-200 text-5xl mb-4"></i>
-                            <p class="text-gray-400 font-medium">Nenhuma análise feita nas últimas 48h.</p>
-                            <a href="analisador-ia.html" class="inline-block mt-4 text-emerald-600 font-bold hover:underline">Analisar prato agora →</a>
+                        <div class="glass-card p-10 text-center border-dashed">
+                            <i class="fas fa-utensils text-5xl mb-4" style="color: var(--text-secondary); opacity: 0.3;"></i>
+                            <p class="font-medium" style="color: var(--text-secondary);">Nenhuma análise feita nas últimas 48h.</p>
+                            <a href="analisador-ia.html" class="inline-block mt-4 text-emerald-500 font-bold hover:underline">Analisar prato agora →</a>
                         </div>
                     `;
                     return;
@@ -79,43 +106,41 @@
                 dados.forEach(item => {
                     const dataFormatada = new Date(item.dataAnalise).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
                     const diaSemana = new Date(item.dataAnalise).toLocaleDateString('pt-BR', {weekday: 'long'});
-                    
-                    // LÓGICA DE FEEDBACK DA IA (Simplificada com base nas metas do usuário)
                     const feedback = gerarFeedback(item, userData.gasto);
 
                     const card = `
-                        <div class="glass-card rounded-3xl p-6 shadow-sm border border-white hover:shadow-md transition-all group">
+                        <div class="glass-card">
                             <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <span class="text-[10px] font-bold text-emerald-500 uppercase">${diaSemana} • ${dataFormatada}</span>
-                                    <h3 class="text-lg font-bold text-gray-800 capitalize">${item.alimento}</h3>
-                                    <p class="text-xs text-gray-400">Porção ${item.porcao}</p>
+                                    <span class="text-[10px] font-bold uppercase" style="color: var(--text-secondary);">${diaSemana} • ${dataFormatada}</span>
+                                    <h3 class="text-lg font-bold capitalize" style="color: var(--text);">${item.alimento}</h3>
+                                    <p class="text-xs" style="color: var(--text-secondary);">Porção ${item.porcao}</p>
                                 </div>
-                                <div class="bg-gray-900 text-white px-3 py-1.5 rounded-xl font-bold text-sm">
-                                    ${item.calorias} <span class="text-[9px] text-gray-400">kcal</span>
+                                <div class="px-3 py-1.5 rounded-xl font-bold text-sm" style="background: #1a1a1a; color: white;">
+                                    ${item.calorias} <span class="text-[9px]" style="color: #94a3b8;">kcal</span>
                                 </div>
                             </div>
 
                             <div class="grid grid-cols-3 gap-3 mb-5">
-                                <div class="bg-blue-50 rounded-2xl p-3">
-                                    <p class="text-[9px] font-bold text-blue-400 uppercase">Carbos</p>
-                                    <p class="font-bold text-blue-700">${item.carbos}g</p>
+                                <div class="rounded-2xl p-3" style="background: rgba(59,130,246,0.1);">
+                                    <p class="text-[9px] font-bold uppercase" style="color: #3b82f6;">Carbos</p>
+                                    <p class="font-bold" style="color: #3b82f6;">${item.carbos}g</p>
                                 </div>
-                                <div class="bg-rose-50 rounded-2xl p-3">
-                                    <p class="text-[9px] font-bold text-rose-400 uppercase">Proteínas</p>
-                                    <p class="font-bold text-rose-700">${item.proteinas}g</p>
+                                <div class="rounded-2xl p-3" style="background: rgba(244,63,94,0.1);">
+                                    <p class="text-[9px] font-bold uppercase" style="color: #f43f5e;">Proteínas</p>
+                                    <p class="font-bold" style="color: #f43f5e;">${item.proteinas}g</p>
                                 </div>
-                                <div class="bg-amber-50 rounded-2xl p-3">
-                                    <p class="text-[9px] font-bold text-amber-400 uppercase">Gorduras</p>
-                                    <p class="font-bold text-amber-700">${item.gorduras}g</p>
+                                <div class="rounded-2xl p-3" style="background: rgba(245,158,11,0.1);">
+                                    <p class="text-[9px] font-bold uppercase" style="color: #f59e0b;">Gorduras</p>
+                                    <p class="font-bold" style="color: #f59e0b;">${item.gorduras}g</p>
                                 </div>
                             </div>
 
-                            <div class="${feedback.corFundo} rounded-2xl p-4 flex gap-3 items-start border ${feedback.corBorda}">
+                            <div class="rounded-2xl p-4 flex gap-3 items-start" style="background: ${feedback.corFundo}; border: 1px solid ${feedback.corBorda};">
                                 <div class="text-lg mt-0.5">${feedback.emoji}</div>
                                 <div>
-                                    <p class="text-[10px] font-black uppercase tracking-tighter ${feedback.corTexto}">Feedback da IA</p>
-                                    <p class="text-xs ${feedback.corTexto} leading-relaxed opacity-90">${feedback.texto}</p>
+                                    <p class="text-[10px] font-black uppercase tracking-tighter" style="color: ${feedback.corTexto};">Feedback da IA</p>
+                                    <p class="text-xs leading-relaxed" style="color: ${feedback.corTexto}; opacity: 0.9;">${feedback.texto}</p>
                                 </div>
                             </div>
                         </div>
@@ -130,16 +155,15 @@
         }
 
         function gerarFeedback(analise, gastoDiario) {
-            const limiteRefeicao = (gastoDiario * 0.35); // 35% do gasto diário numa refeição é considerado alto
+            const limiteRefeicao = (gastoDiario * 0.35);
             
-            // Lógica simples baseada em macronutrientes detctados
             if (analise.calorias > limiteRefeicao) {
                 return {
                     texto: "Esta refeição representa uma grande parte da sua meta diária. Balanceie com um jantar leve para não exceder seu gasto total.",
                     emoji: "⚖️",
-                    corFundo: "bg-orange-50",
-                    corTexto: "text-orange-700",
-                    corBorda: "border-orange-100"
+                    corFundo: "rgba(251,146,60,0.1)",
+                    corTexto: "#ea580c",
+                    corBorda: "rgba(251,146,60,0.3)"
                 };
             }
             
@@ -147,9 +171,9 @@
                 return {
                     texto: "Excelente aporte de proteínas detectado! Isso é fundamental para manter sua massa magra e dar saciedade.",
                     emoji: "💪",
-                    corFundo: "bg-emerald-50",
-                    corTexto: "text-emerald-700",
-                    corBorda: "border-emerald-100"
+                    corFundo: "rgba(16,185,129,0.1)",
+                    corTexto: "#059669",
+                    corBorda: "rgba(16,185,129,0.3)"
                 };
             }
 
@@ -157,18 +181,18 @@
                  return {
                     texto: "Vegetais detectados. Você está fornecendo micronutrientes essenciais que ajudam no seu metabolismo celular.",
                     emoji: "🥦",
-                    corFundo: "bg-green-50",
-                    corTexto: "text-green-700",
-                    corBorda: "border-green-100"
+                    corFundo: "rgba(34,197,94,0.1)",
+                    corTexto: "#16a34a",
+                    corBorda: "rgba(34,197,94,0.3)"
                 };
             }
 
             return {
                 texto: "Análise realizada com sucesso. Mantenha-se hidratado e continue monitorando seus pratos para educar seu paladar.",
                 emoji: "🎯",
-                corFundo: "bg-blue-50",
-                corTexto: "text-blue-700",
-                corBorda: "border-blue-100"
+                corFundo: "rgba(59,130,246,0.1)",
+                corTexto: "#2563eb",
+                corBorda: "rgba(59,130,246,0.3)"
             };
         }
 

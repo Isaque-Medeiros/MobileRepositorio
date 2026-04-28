@@ -141,7 +141,19 @@ app.MapPost("/login", (LoginDTO dadosLogin) => {
         var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
         var user = db.Usuarios.FirstOrDefault(u => u.Email.ToLower() == dadosLogin.Email.Trim().ToLower());
         if (user != null && BCrypt.Net.BCrypt.Verify(dadosLogin.Senha, user.SenhaHash)) {
-            return Results.Ok(new { id = user.ID, nome = user.Nome, imc = user.IMC, tmb = user.TMB, gasto = user.GastoTotal }); 
+            return Results.Ok(new { 
+                id = user.ID, 
+                nome = user.Nome, 
+                email = user.Email,
+                imc = user.IMC, 
+                tmb = user.TMB, 
+                gasto = user.GastoTotal,
+                peso = user.Peso,
+                altura = user.Altura,
+                pesoMeta = user.PesoMeta,
+                dataNascimento = user.DataNascimento,
+                idade = user.CalcularIdade()
+            }); 
         }
         return Results.Json(new { mensagem = "E-mail ou senha incorretos." }, statusCode: 400);
     }
@@ -372,6 +384,204 @@ app.MapPost("/definir-meta", async (MetaDTO dados, PonteBanco.PonteDB db) => {
     }
 });
 
+// ============================================================
+// NOVAS ROTAS: USUÁRIO (perfil, data de nascimento, nome)
+// ============================================================
+
+// GET /usuario/{id} - Retorna dados completos do usuário
+app.MapGet("/usuario/{id}", async (int id, PonteBanco.PonteDB db) => {
+    try {
+        var user = await db.Usuarios.FindAsync(id);
+        if (user == null) return Results.NotFound(new { mensagem = "Usuário não encontrado." });
+        
+        return Results.Ok(new {
+            id = user.ID,
+            nome = user.Nome,
+            email = user.Email,
+            peso = user.Peso,
+            altura = user.Altura,
+            imc = user.IMC,
+            tmb = user.TMB,
+            gasto = user.GastoTotal,
+            pesoMeta = user.PesoMeta,
+            dataNascimento = user.DataNascimento,
+            idade = user.CalcularIdade(),
+            sexo = user.Sexo,
+            tipoPessoa = user.TipoPessoa
+        });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /usuario/{id}: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao buscar usuário." }, statusCode: 500);
+    }
+});
+
+// PUT /usuario/atualizar-nome - Atualiza nome do usuário
+app.MapPut("/usuario/atualizar-nome", async (AtualizarNomeDTO dto, PonteBanco.PonteDB db) => {
+    try {
+        var user = await db.Usuarios.FindAsync(dto.UsuarioId);
+        if (user == null) return Results.NotFound();
+        user.Nome = dto.Nome;
+        await db.SaveChangesAsync();
+        return Results.Ok(new { nome = user.Nome });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /usuario/atualizar-nome: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao atualizar nome." }, statusCode: 500);
+    }
+});
+
+// PUT /usuario/atualizar-senha - Atualiza senha do usuário
+app.MapPut("/usuario/atualizar-senha", async (AtualizarSenhaDTO dto, PonteBanco.PonteDB db) => {
+    try {
+        var user = await db.Usuarios.FindAsync(dto.UsuarioId);
+        if (user == null) return Results.NotFound();
+        user.SenhaHash = BCrypt.Net.BCrypt.HashPassword(dto.NovaSenha);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Senha atualizada com sucesso!" });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /usuario/atualizar-senha: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao atualizar senha." }, statusCode: 500);
+    }
+});
+
+// PUT /usuario/atualizar-data-nascimento - Atualiza data de nascimento
+app.MapPut("/usuario/atualizar-data-nascimento", async (AtualizarDataNascimentoDTO dto, PonteBanco.PonteDB db) => {
+    try {
+        var user = await db.Usuarios.FindAsync(dto.UsuarioId);
+        if (user == null) return Results.NotFound();
+        user.DataNascimento = dto.DataNascimento;
+        user.Idade = user.CalcularIdade(); // Atualiza o campo Idade também
+        await db.SaveChangesAsync();
+        return Results.Ok(new { dataNascimento = user.DataNascimento, idade = user.Idade });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /usuario/atualizar-data-nascimento: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao atualizar data de nascimento." }, statusCode: 500);
+    }
+});
+
+// ============================================================
+// NOVAS ROTAS: CONSUMO DE ÁGUA
+// ============================================================
+
+// POST /registrar-agua - Registra consumo de água
+app.MapPost("/registrar-agua", async (RegistrarAguaDTO dto, PonteBanco.PonteDB db) => {
+    try {
+        var consumo = new ConsumoAgua {
+            UsuarioId = dto.UsuarioId,
+            Ml = dto.Ml,
+            DataRegistro = DateTime.Now
+        };
+        db.ConsumoAgua.Add(consumo);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Água registrada!", id = consumo.Id });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /registrar-agua: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao registrar água." }, statusCode: 500);
+    }
+});
+
+// GET /agua-diario/{usuarioId} - Retorna consumo de água do dia
+app.MapGet("/agua-diario/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
+    try {
+        var hoje = DateTime.Today;
+        var consumos = await db.ConsumoAgua
+            .Where(c => c.UsuarioId == usuarioId && c.DataRegistro >= hoje)
+            .ToListAsync();
+        var totalMl = consumos.Sum(c => c.Ml);
+        return Results.Ok(new { totalMl, registros = consumos.Count });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /agua-diario: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao buscar consumo de água." }, statusCode: 500);
+    }
+});
+
+// GET /agua-semanal/{usuarioId} - Retorna consumo de água da semana
+app.MapGet("/agua-semanal/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
+    try {
+        var inicioSemana = DateTime.Today.AddDays(-(int)DateTime.Today.DayOfWeek);
+        var consumos = await db.ConsumoAgua
+            .Where(c => c.UsuarioId == usuarioId && c.DataRegistro >= inicioSemana)
+            .ToListAsync();
+        
+        var dias = new List<string> { "Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado" };
+        var semana = dias.Select((dia, i) => {
+            var data = inicioSemana.AddDays(i);
+            var total = consumos.Where(c => c.DataRegistro.Date == data.Date).Sum(c => c.Ml);
+            return new { dia, totalMl = total };
+        }).ToList();
+
+        var totalSemanal = consumos.Sum(c => c.Ml);
+        return Results.Ok(new { semana, totalSemanal });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /agua-semanal: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao buscar consumo semanal." }, statusCode: 500);
+    }
+});
+
+// ============================================================
+// NOVAS ROTAS: REFEIÇÕES AGENDADAS (PRATOS DA SEMANA)
+// ============================================================
+
+// GET /refeicoes-semana/{usuarioId} - Lista refeições agendadas do usuário
+app.MapGet("/refeicoes-semana/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
+    try {
+        var refeicoes = await db.RefeicoesAgendadas
+            .Where(r => r.UsuarioId == usuarioId)
+            .OrderBy(r => r.DiaSemana)
+            .ThenBy(r => r.TipoRefeicao)
+            .ToListAsync();
+        return Results.Ok(refeicoes);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /refeicoes-semana: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao buscar refeições." }, statusCode: 500);
+    }
+});
+
+// POST /salvar-refeicao-semana - Salva uma refeição agendada
+app.MapPost("/salvar-refeicao-semana", async (RefeicaoAgendada refeicao, PonteBanco.PonteDB db) => {
+    try {
+        db.RefeicoesAgendadas.Add(refeicao);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Refeição salva!", id = refeicao.Id });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /salvar-refeicao-semana: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao salvar refeição." }, statusCode: 500);
+    }
+});
+
+// DELETE /remover-refeicao-semana/{id} - Remove uma refeição agendada
+app.MapDelete("/remover-refeicao-semana/{id}", async (int id, PonteBanco.PonteDB db) => {
+    try {
+        var refeicao = await db.RefeicoesAgendadas.FindAsync(id);
+        if (refeicao == null) return Results.NotFound();
+        db.RefeicoesAgendadas.Remove(refeicao);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Refeição removida!" });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /remover-refeicao-semana: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao remover refeição." }, statusCode: 500);
+    }
+});
+
 app.Run(); // FINAL DO ARQUIVO
 
 // Modelos de dados (DTOs)
@@ -382,3 +592,7 @@ public record RedefinicaoFinal(string Email, string NovaSenha);
 public record EsqueceuSenhaDTO(string Email);
 public record RedefinicaoSenhaDTO(string Email, string NovaSenha);
 public record MetaDTO(int UsuarioId, double PesoMeta);
+public record AtualizarNomeDTO(int UsuarioId, string Nome);
+public record AtualizarSenhaDTO(int UsuarioId, string NovaSenha);
+public record AtualizarDataNascimentoDTO(int UsuarioId, DateTime DataNascimento);
+public record RegistrarAguaDTO(int UsuarioId, double Ml);

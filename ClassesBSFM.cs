@@ -38,10 +38,51 @@ namespace ClassesBSFM
         public double GastoTotal { get; set; }
         public double PesoMeta { get; set; } // O peso que o usuário quer atingir
 
+        // NOVO: Data de Nascimento para cálculo automático da idade
+        public DateTime? DataNascimento { get; set; }
+
         public Usuario() {
             AceitouTermos = false;
             DataAceite = DateTime.UtcNow; 
         }
+
+        // Propriedade calculada: idade baseada na DataNascimento
+        public int CalcularIdade()
+        {
+            if (DataNascimento == null) return Idade; // fallback para o valor antigo
+            var hoje = DateTime.Today;
+            var idade = hoje.Year - DataNascimento.Value.Year;
+            if (DataNascimento.Value.Date > hoje.AddYears(-idade)) idade--;
+            return idade;
+        }
+    }
+
+    // NOVA CLASSE: Consumo de Água
+    public class ConsumoAgua
+    {
+        [Key]
+        public int Id { get; set; }
+        public int UsuarioId { get; set; }
+        public double Ml { get; set; } // Quantidade em ml
+        public DateTime DataRegistro { get; set; } = DateTime.Now;
+    }
+
+    // NOVA CLASSE: RefeicaoAgendada (pratos da semana)
+    public class RefeicaoAgendada
+    {
+        [Key]
+        public int Id { get; set; }
+        public int UsuarioId { get; set; }
+        public string DiaSemana { get; set; } = string.Empty; // "Segunda", "Terca", etc.
+        public string TipoRefeicao { get; set; } = string.Empty; // "Café", "Almoço", "Jantar", "Lanche"
+        public string NomePrato { get; set; } = string.Empty;
+        public string Ingredientes { get; set; } = string.Empty;
+        public string ModoPreparo { get; set; } = string.Empty;
+        public double Calorias { get; set; }
+        public double Proteinas { get; set; }
+        public double Carboidratos { get; set; }
+        public double Gorduras { get; set; }
+        public DateTime DataCriacao { get; set; } = DateTime.Now;
     }
 
     public class CalcularNutricional

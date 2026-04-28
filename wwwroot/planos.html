@@ -3,589 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BSFM - Planos Alimentares</title>
+    <title>BSFM - Pratos da Semana</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f0fdf4; }
-        .glass-panel { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(15px); border-radius: 2.5rem; border: 1px solid white; box-shadow: 0 20px 40px rgba(5, 150, 105, 0.1); }
-        .meal-tab.active { background: #10b981; color: white; transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.4); }
-        .recipe-preview { border-left: 4px solid #10b981; }
+        :root { --bg: #000000; --bg-card: #1a1a1a; --text: #f1f5f9; --text-secondary: #94a3b8; --border: rgba(51,65,85,0.6); }
+        .light-mode { --bg: #f0fdf4; --bg-card: rgba(255,255,255,0.95); --text: #1e293b; --text-secondary: #64748b; --border: rgba(226,232,240,0.8); }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); transition: all 0.3s; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 1.5rem; padding: 1.5rem; transition: all 0.3s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(16,185,129,0.15); }
+        .btn-primary { background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 0.75rem 1.5rem; border-radius: 1rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(16,185,129,0.4); }
+        .btn-secondary { background: #f1f5f9; color: #475569; padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+        .btn-secondary:hover { background: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+        .btn-danger { background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 0.75rem; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s; }
+        .btn-danger:hover { background: #dc2626; }
+        .tab-btn { padding: 0.75rem 1.25rem; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.3s; border: none; background: transparent; color: var(--text-secondary); }
+        .tab-btn.active { background: #10b981; color: white; }
+        .tab-btn:hover:not(.active) { background: #ecfdf5; color: #047857; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: var(--bg-card); border-radius: 1.5rem; padding: 2rem; max-width: 500px; width: 90%; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 2px solid #e2e8f0; outline: none; font-size: 0.95rem; background: rgba(241,245,249,0.8); transition: all 0.25s; margin-bottom: 0.75rem; }
+        .modal-content input:focus, .modal-content select:focus, .modal-content textarea:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .modal-content textarea { resize: vertical; min-height: 80px; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 10px; }
+        .theme-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s; }
+        .theme-btn:hover { transform: translateY(-2px); }
     </style>
 </head>
-<body class="p-4 md:p-8 flex flex-col min-h-screen animate-in fade-in duration-500">
-
-    <div class="max-w-6xl mx-auto w-full">
-        <!-- HEADER PLANOS -->
-        <header class="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
+<body class="min-h-screen">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8">
             <div class="flex items-center gap-4">
-                <a href="dashboard.html" class="w-12 h-12 bg-white flex items-center justify-center rounded-2xl shadow-sm text-emerald-600 hover:bg-emerald-600 hover:text-white transition-all transform active:scale-90">
-                    <i class="fas fa-arrow-left"></i>
-                </a>
-                <div>
-                    <h1 class="text-2xl font-black text-emerald-900 tracking-tighter uppercase leading-none italic">Plano <span class="text-emerald-500">Nutricional</span></h1>
-                    <p class="text-xs font-bold text-gray-400 mt-1 uppercase tracking-widest">Cronograma Personalizado BSFM</p>
-                </div>
+                <button onclick="window.location.href='dashboard.html'" class="btn-secondary"><i class="fas fa-arrow-left mr-2"></i>Voltar</button>
+                <h1 class="text-2xl font-bold"><i class="fas fa-calendar-week text-emerald-600 mr-3"></i>Pratos da Semana</h1>
             </div>
+            <button onclick="toggleTheme()" class="theme-btn"><i id="themeIcon" class="fas fa-sun"></i></button>
+        </div>
 
-                <!-- SMART BUTTONS: OCR & NOVO CRONOGRAMA -->
-                <div class="flex flex-col sm:flex-row gap-4">
-                    <button onclick="document.getElementById('inputOCR').click()" class="bg-gray-900 hover:bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1">
-                        <i class="fas fa-file-invoice text-emerald-400"></i> IMPORTAR RECEITA (IA/OCR)
-                        <input type="file" id="inputOCR" class="hidden" accept="image/*" onchange="previewOCR(this)">
-                    </button>
-                    <button onclick="abrirModalNovoCronograma()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1">
-                        <i class="fas fa-plus-circle"></i> NOVO CRONOGRAMA
-                    </button>
-                </div>
-        </header>
+        <!-- Tabs Dias -->
+        <div class="flex flex-wrap gap-2 mb-6" id="diasTabs">
+            <button class="tab-btn active" onclick="selecionarDia('Segunda', this)">Segunda</button>
+            <button class="tab-btn" onclick="selecionarDia('Terça', this)">Terça</button>
+            <button class="tab-btn" onclick="selecionarDia('Quarta', this)">Quarta</button>
+            <button class="tab-btn" onclick="selecionarDia('Quinta', this)">Quinta</button>
+            <button class="tab-btn" onclick="selecionarDia('Sexta', this)">Sexta</button>
+            <button class="tab-btn" onclick="selecionarDia('Sábado', this)">Sábado</button>
+            <button class="tab-btn" onclick="selecionarDia('Domingo', this)">Domingo</button>
+        </div>
 
-        <!-- SELEÇÃO DE DIA DA SEMANA -->
-        <nav class="flex gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
-            <button class="meal-tab active px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all" onclick="mudarDia('Segunda')">Segunda</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Terca')">Terça</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Quarta')">Quarta</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Quinta')">Quinta</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Sexta')">Sexta</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Sabado')">Sábado</button>
-            <button class="meal-tab bg-white text-emerald-800 px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest transition-all hover:bg-emerald-50" onclick="mudarDia('Domingo')">Domingo</button>
-        </nav>
+        <!-- Refeições do Dia -->
+        <div id="refeicoesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6"></div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <!-- PAINEL DE RESUMO DE METAS DO DIA -->
-            <div class="lg:col-span-1">
-                <div class="glass-panel p-8 sticky top-8">
-                    <h3 class="font-black text-emerald-900 text-lg uppercase tracking-tight mb-8 italic">Metas do Dia</h3>
-                    
-                    <div class="space-y-8">
-                        <div>
-                            <div class="flex justify-between text-xs font-black uppercase text-emerald-700 mb-2">
-                                <span>Energia Total</span>
-                                <span>1850 / <span class="text-gray-400">2200 kcal</span></span>
-                            </div>
-                            <div class="w-full bg-emerald-50 h-3 rounded-full overflow-hidden">
-                                <div class="bg-emerald-500 h-full transition-all duration-1000" style="width: 82%"></div>
-                            </div>
-                        </div>
+        <!-- Botão Adicionar -->
+        <button onclick="abrirModalAdicionar()" class="btn-primary w-full md:w-auto"><i class="fas fa-plus mr-2"></i>Adicionar Refeição</button>
+    </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-blue-50 p-4 rounded-3xl">
-                                <p class="text-[10px] font-bold text-blue-400 uppercase">Proteínas</p>
-                                <p class="text-lg font-black text-blue-700">145g <span class="text-xs opacity-60 font-medium">/ 180g</span></p>
-                            </div>
-                            <div class="bg-rose-50 p-4 rounded-3xl">
-                                <p class="text-[10px] font-bold text-rose-400 uppercase">Gorduras</p>
-                                <p class="text-lg font-black text-rose-700">55g <span class="text-xs opacity-60 font-medium">/ 70g</span></p>
-                            </div>
-                        </div>
-
-                        <!-- Badge Inteligente de Hidratação -->
-                        <div class="bg-cyan-600 rounded-[2rem] p-6 text-white text-center shadow-lg shadow-cyan-100">
-                            <i class="fas fa-droplet text-cyan-200 text-2xl mb-2"></i>
-                            <h4 class="text-xs font-black uppercase tracking-widest mb-1">Hidratação</h4>
-                            <p class="text-2xl font-black">2.1L <span class="text-xs opacity-70">/ 3.5L</span></p>
-                        </div>
-                    </div>
-                </div>
+    <!-- Modal -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg" id="modalTitle">Nova Refeição</h3>
+                <button onclick="fecharModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
             </div>
-
-            <!-- FEED DE REFEIÇÕES DO PLANO -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Refeição 01 -->
-                <div class="glass-panel p-8 flex flex-col md:flex-row gap-6 hover:shadow-2xl transition-all">
-                    <div class="w-full md:w-48 aspect-square rounded-[2rem] overflow-hidden bg-emerald-100 shrink-0 relative group">
-                        <img src="https://images.unsplash.com/photo-1494853356241-d14300307e56?q=80&w=480" class="w-full h-full object-cover transition duration-700 group-hover:scale-110" />
-                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                            <button class="bg-white text-emerald-700 p-4 rounded-full text-lg shadow-2xl"><i class="fas fa-utensils"></i></button>
-                        </div>
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider italic">08:00 - CAFÉ DA MANHÃ</span>
-                            <div class="flex gap-2">
-                                <button class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-300 hover:text-emerald-500"><i class="fas fa-check"></i></button>
-                                <button class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-300 hover:text-gray-900"><i class="fas fa-pen-nib text-[10px]"></i></button>
-                            </div>
-                        </div>
-                        <h3 class="text-xl font-black text-gray-800 mb-2 leading-tight italic">Ovos Mexidos com Pão de Grãos</h3>
-                        <p class="text-xs text-gray-400 font-medium mb-6 leading-relaxed italic uppercase">Fonte: Métrica BSFM / In Natura Mínimo</p>
-                        <div class="recipe-preview bg-emerald-50/40 p-4 rounded-2xl flex flex-wrap gap-4">
-                            <span class="text-xs font-bold text-emerald-700 uppercase">🥚 2 Ovos</span>
-                            <span class="text-xs font-bold text-emerald-700 uppercase">🍞 2 Fatias Integrais</span>
-                            <span class="text-xs font-bold text-emerald-700 uppercase">🥑 Meio Abacate</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Refeição 02 (Almoço) -->
-                 <div class="glass-panel p-8 flex flex-col md:flex-row gap-6 hover:shadow-2xl transition-all">
-                    <div class="w-full md:w-48 aspect-square rounded-[2rem] overflow-hidden bg-orange-100 shrink-0 relative group">
-                        <img src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=480" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-700" />
-                    </div>
-                    <div class="flex-1 text-gray-800">
-                        <div class="flex items-center justify-between mb-4">
-                            <span class="bg-orange-100 text-orange-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider italic">12:30 - ALMOÇO BALANCEADO</span>
-                        </div>
-                        <h3 class="text-xl font-black mb-2 leading-tight italic text-emerald-800">Salmão ao Molho Pesto e Quinoa</h3>
-                        <div class="flex gap-4 text-[10px] font-black text-orange-400 uppercase mt-2 mb-6">
-                            <span>Kcal: 550</span>
-                            <span>Proteína: 45g</span>
-                            <span>Fibra: Alta</span>
-                        </div>
-                        <button class="text-xs font-bold text-gray-400 hover:text-emerald-600 underline underline-offset-4 decoration-2">Ver Passo-a-passo Preparo</button>
-                    </div>
-                </div>
-
-                <!-- Módulo Adicionar Refeição Dinâmico -->
-                <button class="w-full bg-white border-2 border-dashed border-emerald-200 p-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center group hover:bg-emerald-50 transition-all">
-                    <div class="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 text-xl mb-4 group-hover:rotate-90 transition">
-                        <i class="fas fa-plus"></i>
-                    </div>
-                    <h4 class="font-black text-emerald-900 tracking-tighter uppercase italic">Adicionar Nova Refeição</h4>
-                    <p class="text-[10px] text-gray-400 font-bold tracking-widest mt-2 italic px-8 uppercase">A alimentação inteligente evolui com sua rotina diária.</p>
-                </button>
-
-            </div>
+            <div id="modalBody"></div>
         </div>
     </div>
 
     <script>
-        // URL da API - backend no Render
         const API_URL = 'https://bsfm-back-end.onrender.com';
-
+        let userLocal = JSON.parse(localStorage.getItem('usuarioLogado'));
         let diaAtual = 'Segunda';
-        let cronogramaAtivo = null;
+        let editandoId = null;
 
-        // Inicializa a página
-        window.onload = function() {
-            carregarCronogramaAtivo();
-        };
+        if (!userLocal) { window.location.href = 'login.html'; }
 
-        // Função para mudar de dia
-        async function mudarDia(dia) {
+        // Theme
+        function toggleTheme() {
+            document.body.classList.toggle('light-mode');
+            const icon = document.getElementById('themeIcon');
+            if (document.body.classList.contains('light-mode')) {
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('bsfmTheme', 'light');
+            } else {
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('bsfmTheme', 'dark');
+            }
+        }
+        if (localStorage.getItem('bsfmTheme') !== 'light') {
+            document.body.classList.remove('light-mode');
+            document.getElementById('themeIcon').className = 'fas fa-sun';
+        } else {
+            document.body.classList.add('light-mode');
+            document.getElementById('themeIcon').className = 'fas fa-moon';
+        }
+
+        window.onload = function() { carregarRefeicoes(); };
+
+        function selecionarDia(dia, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             diaAtual = dia;
-            
-            // Atualiza a UI das abas
-            document.querySelectorAll('.meal-tab').forEach(tab => {
-                tab.classList.remove('active', 'bg-white', 'text-emerald-800');
-                tab.classList.add('bg-white', 'text-emerald-800');
-            });
-            
-            const tabAtiva = document.querySelector(`.meal-tab[onclick*="${dia}"]`);
-            if (tabAtiva) {
-                tabAtiva.classList.add('active');
-                tabAtiva.classList.remove('bg-white', 'text-emerald-800');
-            }
-
-            // Atualiza o título da página
-            document.querySelector('h1').innerHTML = `Plano <span class="text-emerald-500">${dia}</span>`;
-            
-            // Carrega as refeições do dia
-            await carregarRefeicoesDoDia(dia);
-            
-            // Carrega o resumo nutricional
-            await carregarResumoNutricional(dia);
+            carregarRefeicoes();
         }
 
-        // Carrega o cronograma ativo do usuário
-        async function carregarCronogramaAtivo() {
+        async function carregarRefeicoes() {
             try {
-                const response = await fetch(`${API_URL}/api/planoalimentar/cronograma-ativo`);
-                const data = await response.json();
-                
-                if (data.sucesso) {
-                    cronogramaAtivo = data.cronograma;
-                    console.log('Cronograma ativo carregado:', cronogramaAtivo);
-                    
-                    // Carrega as refeições do dia atual (Segunda por padrão)
-                    await carregarRefeicoesDoDia('Segunda');
-                    await carregarResumoNutricional('Segunda');
-                } else {
-                    console.log('Nenhum cronograma ativo encontrado');
-                    exibirMensagemSemPlano();
-                }
-            } catch (error) {
-                console.error('Erro ao carregar cronograma ativo:', error);
-                exibirMensagemErro();
-            }
-        }
-
-        // Carrega as refeições de um dia específico
-        async function carregarRefeicoesDoDia(dia) {
-            try {
-                const response = await fetch(`${API_URL}/api/planoalimentar/refeicoes-dia/${dia}`);
-                const data = await response.json();
-                
-                if (data.sucesso) {
-                    exibirRefeicoes(data.refeicoes);
-                } else {
-                    console.log('Nenhuma refeição encontrada para este dia');
-                    exibirSemRefeicoes();
-                }
-            } catch (error) {
-                console.error('Erro ao carregar refeições:', error);
-                exibirSemRefeicoes();
-            }
-        }
-
-        // Carrega o resumo nutricional do dia
-        async function carregarResumoNutricional(dia) {
-            try {
-                const response = await fetch(`${API_URL}/api/planoalimentar/resumo-dia/${dia}`);
-                const data = await response.json();
-                
-                if (data.sucesso) {
-                    atualizarResumoNutricional(data);
-                } else {
-                    console.log('Erro ao carregar resumo nutricional');
-                }
-            } catch (error) {
-                console.error('Erro ao carregar resumo nutricional:', error);
-            }
-        }
-
-        // Exibe as refeições na interface
-        function exibirRefeicoes(refeicoes) {
-            const container = document.querySelector('.lg\\:col-span-2.space-y-6');
-            const mensagemSemRefeicoes = document.getElementById('sem-refeicoes-msg');
-            
-            if (mensagemSemRefeicoes) {
-                mensagemSemRefeicoes.remove();
-            }
-
-            // Remove refeições existentes (exceto o botão de adicionar)
-            const refeicoesExistentes = container.querySelectorAll('.glass-panel:not(.bg-white.border-2.border-dashed)');
-            refeicoesExistentes.forEach(ref => ref.remove());
-
-            if (refeicoes.length === 0) {
-                exibirSemRefeicoes();
-                return;
-            }
-
-            // Cria os cards de refeições
-            refeicoes.forEach((refeicao, index) => {
-                const card = criarCardRefeicao(refeicao, index);
-                container.insertBefore(card, container.lastElementChild);
-            });
-        }
-
-        // Cria um card de refeição
-        function criarCardRefeicao(refeicao, index) {
-            const card = document.createElement('div');
-            card.className = 'glass-panel p-8 flex flex-col md:flex-row gap-6 hover:shadow-2xl transition-all animate-fade-in-up';
-            card.style.animationDelay = `${200 + (index * 100)}ms`;
-
-            const horarioFormatado = refeicao.horario || '00:00';
-            const statusConcluida = refeicao.estaConcluida ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500';
-
-            card.innerHTML = `
-                <div class="w-full md:w-48 aspect-square rounded-[2rem] overflow-hidden bg-gradient-to-br from-emerald-100 to-emerald-200 shrink-0 relative group">
-                    <img src="https://images.unsplash.com/photo-1494853356241-d14300307e56?q=80&w=480" class="w-full h-full object-cover transition duration-700 group-hover:scale-105" />
-                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                        <button class="bg-white text-emerald-700 p-4 rounded-full text-lg shadow-2xl"><i class="fas fa-utensils"></i></button>
-                    </div>
-                </div>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="bg-emerald-100 text-emerald-600 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-wider italic">${horarioFormatado} - ${refeicao.nomeRefeicao.toUpperCase()}</span>
-                        <div class="flex gap-2">
-                            <button onclick="concluirRefeicao(${refeicao.id})" class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-300 hover:text-emerald-500 ${refeicao.estaConcluida ? 'text-green-500' : ''}">
-                                <i class="fas fa-check"></i>
-                            </button>
-                            <button class="w-8 h-8 rounded-full border border-gray-100 flex items-center justify-center text-gray-300 hover:text-gray-900">
-                                <i class="fas fa-pen-nib text-[10px]"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <h3 class="text-xl font-black text-gray-800 mb-2 leading-tight italic">${refeicao.descricao}</h3>
-                    <p class="text-xs text-gray-400 font-medium mb-6 leading-relaxed italic uppercase">Fonte: Métrica BSFM / In Natura Mínimo</p>
-                    <div class="recipe-preview bg-emerald-50/40 p-4 rounded-2xl flex flex-wrap gap-4">
-                        ${refeicao.ingredientes ? `<span class="text-xs font-bold text-emerald-700 uppercase">🥗 ${refeicao.ingredientes}</span>` : ''}
-                        ${refeicao.calorias ? `<span class="text-xs font-bold text-emerald-700 uppercase">🔥 ${refeicao.calorias} kcal</span>` : ''}
-                        ${refeicao.proteinas ? `<span class="text-xs font-bold text-emerald-700 uppercase">💪 ${refeicao.proteinas}g P</span>` : ''}
-                    </div>
-                </div>
-            `;
-
-            return card;
-        }
-
-        // Marca uma refeição como concluída
-        async function concluirRefeicao(refeicaoId) {
-            try {
-                const response = await fetch(`${API_URL}/api/planoalimentar/refeicao/${refeicaoId}/concluir`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json'
+                const resp = await fetch(`${API_URL}/refeicoes-semana/${userLocal.id}`);
+                if (resp.ok) {
+                    const todas = await resp.json();
+                    const filtradas = todas.filter(r => r.diaSemana === diaAtual);
+                    const container = document.getElementById('refeicoesContainer');
+                    if (filtradas.length === 0) {
+                        container.innerHTML = `<div class="card col-span-full text-center py-12"><i class="fas fa-utensils text-4xl text-slate-300 mb-3"></i><p class="text-slate-400">Nenhuma refeição para ${diaAtual}. Adicione uma!</p></div>`;
+                        return;
                     }
-                });
-
-                const data = await response.json();
-                
-                if (data.sucesso) {
-                    // Atualiza a UI
-                    const botao = event.target.closest('button');
-                    botao.classList.remove('text-gray-300', 'hover:text-emerald-500');
-                    botao.classList.add('text-green-500');
-                    
-                    // Recarrega o resumo nutricional
-                    await carregarResumoNutricional(diaAtual);
-                    
-                    alert('Refeição concluída com sucesso!');
-                } else {
-                    alert('Erro ao concluir refeição: ' + data.mensagem);
-                }
-            } catch (error) {
-                console.error('Erro ao concluir refeição:', error);
-                alert('Erro ao concluir refeição');
-            }
-        }
-
-        // Atualiza o resumo nutricional na interface
-        function atualizarResumoNutricional(data) {
-            // Atualiza a barra de progresso de energia
-            const progressoEnergia = data.progresso.calorias || 0;
-            const barraEnergia = document.querySelector('.bg-emerald-500');
-            if (barraEnergia) {
-                barraEnergia.style.width = progressoEnergia + '%';
-            }
-
-            // Atualiza os valores de macro
-            const metaCalorias = data.metaCalorias || 2200;
-            const consumoCalorias = data.consumo.calorias || 0;
-            
-            // Atualiza o texto da energia
-            const energiaText = document.querySelector('.flex.justify-between.text-xs.font-black.uppercase.text-emerald-700.mb-2 span:last-child');
-            if (energiaText) {
-                energiaText.innerHTML = `${consumoCalorias} / <span class="text-gray-400">${metaCalorias} kcal</span>`;
-            }
-
-            // Atualiza hidratação (simulação)
-            const hidratacao = Math.min(100, (consumoCalorias / metaCalorias) * 100);
-            const hidratacaoText = document.querySelector('.bg-cyan-600 .text-2xl.font-black');
-            if (hidratacaoText) {
-                hidratacaoText.innerHTML = `${(hidratacao / 100 * 3.5).toFixed(1)}L <span class="text-xs opacity-70">/ 3.5L</span>`;
-            }
-        }
-
-        // Exibe mensagem quando não há refeições
-        function exibirSemRefeicoes() {
-            const container = document.querySelector('.lg\\:col-span-2.space-y-6');
-            const mensagem = document.createElement('div');
-            mensagem.id = 'sem-refeicoes-msg';
-            mensagem.className = 'glass-panel p-8 text-center';
-            mensagem.innerHTML = `
-                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-4">
-                    <i class="fas fa-utensils text-2xl"></i>
-                </div>
-                <h3 class="font-black text-emerald-900 mb-2">Nenhuma refeição programada</h3>
-                <p class="text-sm text-gray-500">Adicione refeições ao seu plano ou importe uma prescrição nutricional via OCR.</p>
-            `;
-            container.insertBefore(mensagem, container.lastElementChild);
-        }
-
-        // Exibe mensagem quando não há plano
-        function exibirMensagemSemPlano() {
-            const container = document.querySelector('.lg\\:col-span-2.space-y-6');
-            const mensagem = document.createElement('div');
-            mensagem.className = 'glass-panel p-8 text-center border-2 border-dashed border-emerald-200';
-            mensagem.innerHTML = `
-                <div class="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-4">
-                    <i class="fas fa-file-invoice text-2xl"></i>
-                </div>
-                <h3 class="font-black text-emerald-900 mb-2">Nenhum plano alimentar ativo</h3>
-                <p class="text-sm text-gray-500 mb-4">Importe sua prescrição nutricional via OCR para começar a usar o cronograma semanal.</p>
-                <button onclick="document.getElementById('inputOCR').click()" class="bg-emerald-600 text-white px-6 py-2 rounded-full font-bold hover:bg-emerald-700 transition">
-                    <i class="fas fa-file-invoice mr-2"></i> Importar Prescrição
-                </button>
-            `;
-            container.insertBefore(mensagem, container.lastElementChild);
-        }
-
-        // Exibe mensagem de erro
-        function exibirMensagemErro() {
-            const container = document.querySelector('.lg\\:col-span-2.space-y-6');
-            const mensagem = document.createElement('div');
-            mensagem.className = 'glass-panel p-8 text-center border-2 border-dashed border-red-200';
-            mensagem.innerHTML = `
-                <div class="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 mx-auto mb-4">
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
-                </div>
-                <h3 class="font-black text-red-900 mb-2">Erro ao carregar dados</h3>
-                <p class="text-sm text-gray-500">Tente novamente mais tarde ou contate o suporte.</p>
-            `;
-            container.insertBefore(mensagem, container.lastElementChild);
-        }
-
-        // Simulando Chamada de OCR
-        async function previewOCR(input) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-                
-                reader.onload = async function(e) {
-                    const base64 = e.target.result;
-                    
-                    // Simula o upload e processamento
-                    const loadingMsg = "📥 Processando prescrição nutricional...\nA IA do BSFM está analisando sua prescrição...";
-                    alert(loadingMsg);
-                    
-                    try {
-                        // Simula a chamada para o backend
-                        const response = await fetch(`${API_URL}/api/planoalimentar/importar-prescricao`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                imagemBase64: base64,
-                                nomePlano: "Plano Nutricional - " + new Date().toLocaleDateString('pt-BR'),
-                                observacoes: "Plano importado via OCR",
-                                dataInicio: new Date().toISOString()
-                            })
-                        });
-
-                        const data = await response.json();
-                        
-                        if (data.sucesso) {
-                            alert(`✅ Prescrição importada com sucesso!\n${data.mensagem}\n${data.totalRefeicoes} refeições foram criadas.`);
-                            
-                            // Recarrega o cronograma
-                            await carregarCronogramaAtivo();
-                        } else {
-                            alert(`❌ Erro ao importar prescrição:\n${data.mensagem}`);
+                    const tipos = ['Café', 'Almoço', 'Jantar', 'Lanche'];
+                    let html = '';
+                    tipos.forEach(tipo => {
+                        const ref = filtradas.filter(r => r.tipoRefeicao === tipo);
+                        if (ref.length > 0) {
+                            ref.forEach(r => {
+                                html += `
+                                    <div class="card">
+                                        <div class="flex justify-between items-start mb-3">
+                                            <div>
+                                                <span class="text-xs font-bold uppercase text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">${r.tipoRefeicao}</span>
+                                                <h3 class="font-bold text-lg mt-1">${r.nomePrato}</h3>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button onclick="abrirModalEditar(${r.id}, '${r.tipoRefeicao}', '${r.nomePrato.replace(/'/g, "\\'")}', '${r.ingredientes.replace(/'/g, "\\'")}', '${r.modoPreparo.replace(/'/g, "\\'")}', ${r.calorias}, ${r.proteinas}, ${r.carboidratos}, ${r.gorduras})" class="btn-secondary text-sm"><i class="fas fa-edit"></i></button>
+                                                <button onclick="removerRefeicao(${r.id})" class="btn-danger text-sm"><i class="fas fa-trash"></i></button>
+                                            </div>
+                                        </div>
+                                        <p class="text-sm mb-2" style="color: var(--text-secondary);"><strong>Ingredientes:</strong> ${r.ingredientes}</p>
+                                        <p class="text-sm mb-3" style="color: var(--text-secondary);"><strong>Modo de Preparo:</strong> ${r.modoPreparo}</p>
+                                        <div class="flex gap-4 text-sm font-bold">
+                                            <span class="text-orange-600">${r.calorias} kcal</span>
+                                            <span class="text-red-600">${r.proteinas}g prot</span>
+                                            <span class="text-blue-600">${r.carboidratos}g carb</span>
+                                            <span class="text-yellow-600">${r.gorduras}g gord</span>
+                                        </div>
+                                    </div>
+                                `;
+                            });
                         }
-                    } catch (error) {
-                        console.error('Erro ao importar prescrição:', error);
-                        alert('❌ Erro ao importar prescrição. Verifique sua conexão e tente novamente.');
-                    }
-                };
-                
-                reader.readAsDataURL(file);
-            }
+                    });
+                    container.innerHTML = html;
+                }
+            } catch (e) { console.error('Erro ao carregar refeições:', e); }
         }
-    </script>
 
-    <!-- MODAL NOVO CRONOGRAMA -->
-    <div id="modalNovoCronograma" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-all duration-300">
-        <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 transform scale-95 transition-all duration-300">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-emerald-800">Novo Cronograma Alimentar</h3>
-                <button onclick="fecharModalNovoCronograma()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-2xl"></i>
-                </button>
-            </div>
-            
-            <form id="formNovoCronograma" onsubmit="return criarNovoCronograma(event)">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Nome do Plano</label>
-                        <input type="text" name="nomePlano" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Ex: Plano de Emagrecimento">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Data de Início</label>
-                        <input type="date" name="dataInicio" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Objetivo</label>
-                        <select name="objetivo" required class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
-                            <option value="">Selecione...</option>
-                            <option value="emagrecimento">Emagrecimento</option>
-                            <option value="ganho_massa">Ganho de Massa</option>
-                            <option value="manutencao">Manutenção</option>
-                            <option value="saude">Saúde Geral</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">Observações</label>
-                        <textarea name="observacoes" rows="3" class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Alguma observação especial sobre o plano..."></textarea>
-                    </div>
+        function abrirModalAdicionar() {
+            editandoId = null;
+            document.getElementById('modalTitle').innerText = 'Nova Refeição';
+            document.getElementById('modalBody').innerHTML = `
+                <select id="inputTipo"><option value="Café">Café</option><option value="Almoço">Almoço</option><option value="Jantar">Jantar</option><option value="Lanche">Lanche</option></select>
+                <input type="text" id="inputNome" placeholder="Nome do prato">
+                <textarea id="inputIngredientes" placeholder="Ingredientes"></textarea>
+                <textarea id="inputPreparo" placeholder="Modo de preparo"></textarea>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="inputCalorias" placeholder="Calorias" step="0.1">
+                    <input type="number" id="inputProteinas" placeholder="Proteínas (g)" step="0.1">
+                    <input type="number" id="inputCarboidratos" placeholder="Carboidratos (g)" step="0.1">
+                    <input type="number" id="inputGorduras" placeholder="Gorduras (g)" step="0.1">
                 </div>
-                
-                <div class="flex gap-3 mt-6">
-                    <button type="button" onclick="fecharModalNovoCronograma()" class="flex-1 bg-gray-200 text-gray-700 py-3 rounded-xl font-bold hover:bg-gray-300 transition">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition">
-                        Criar Plano
-                    </button>
+                <button onclick="salvarRefeicao()" class="btn-primary w-full mt-2"><i class="fas fa-check mr-2"></i>Salvar</button>
+            `;
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function abrirModalEditar(id, tipo, nome, ingredientes, preparo, calorias, proteinas, carboidratos, gorduras) {
+            editandoId = id;
+            document.getElementById('modalTitle').innerText = 'Editar Refeição';
+            document.getElementById('modalBody').innerHTML = `
+                <select id="inputTipo"><option value="Café" ${tipo === 'Café' ? 'selected' : ''}>Café</option><option value="Almoço" ${tipo === 'Almoço' ? 'selected' : ''}>Almoço</option><option value="Jantar" ${tipo === 'Jantar' ? 'selected' : ''}>Jantar</option><option value="Lanche" ${tipo === 'Lanche' ? 'selected' : ''}>Lanche</option></select>
+                <input type="text" id="inputNome" value="${nome}" placeholder="Nome do prato">
+                <textarea id="inputIngredientes" placeholder="Ingredientes">${ingredientes}</textarea>
+                <textarea id="inputPreparo" placeholder="Modo de preparo">${preparo}</textarea>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="inputCalorias" value="${calorias}" step="0.1">
+                    <input type="number" id="inputProteinas" value="${proteinas}" step="0.1">
+                    <input type="number" id="inputCarboidratos" value="${carboidratos}" step="0.1">
+                    <input type="number" id="inputGorduras" value="${gorduras}" step="0.1">
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <script>
-        // URL da API - backend no Render
-        const API_URL = 'https://bsfm-back-end.onrender.com';
-
-        // Funções para o modal de novo cronograma
-        function abrirModalNovoCronograma() {
-            const modal = document.getElementById('modalNovoCronograma');
-            modal.classList.remove('opacity-0', 'pointer-events-none');
-            modal.classList.add('opacity-100', 'pointer-events-auto');
-            modal.querySelector('.transform').classList.remove('scale-95');
-            modal.querySelector('.transform').classList.add('scale-100');
+                <button onclick="salvarRefeicao()" class="btn-primary w-full mt-2"><i class="fas fa-check mr-2"></i>Atualizar</button>
+            `;
+            document.getElementById('modalOverlay').classList.add('active');
         }
 
-        function fecharModalNovoCronograma() {
-            const modal = document.getElementById('modalNovoCronograma');
-            modal.querySelector('.transform').classList.remove('scale-100');
-            modal.querySelector('.transform').classList.add('scale-95');
-            setTimeout(() => {
-                modal.classList.add('opacity-0', 'pointer-events-none');
-                modal.classList.remove('opacity-100', 'pointer-events-auto');
-            }, 200);
-        }
+        function fecharModal() { document.getElementById('modalOverlay').classList.remove('active'); }
 
-        // Função para criar novo cronograma
-        async function criarNovoCronograma(event) {
-            event.preventDefault();
-            
-            const form = event.target;
-            const formData = new FormData(form);
-            
+        async function salvarRefeicao() {
             const dados = {
-                nomePlano: formData.get('nomePlano'),
-                dataInicio: formData.get('dataInicio'),
-                objetivo: formData.get('objetivo'),
-                observacoes: formData.get('observacoes') || ''
+                usuarioId: userLocal.id,
+                diaSemana: diaAtual,
+                tipoRefeicao: document.getElementById('inputTipo').value,
+                nomePrato: document.getElementById('inputNome').value,
+                ingredientes: document.getElementById('inputIngredientes').value,
+                modoPreparo: document.getElementById('inputPreparo').value,
+                calorias: parseFloat(document.getElementById('inputCalorias').value) || 0,
+                proteinas: parseFloat(document.getElementById('inputProteinas').value) || 0,
+                carboidratos: parseFloat(document.getElementById('inputCarboidratos').value) || 0,
+                gorduras: parseFloat(document.getElementById('inputGorduras').value) || 0
             };
-
+            if (!dados.nomePrato) { alert('Digite o nome do prato.'); return; }
             try {
-                const response = await fetch(`${API_URL}/api/planoalimentar/criar-cronograma`, {
+                const resp = await fetch(`${API_URL}/salvar-refeicao-semana`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(dados)
                 });
-
-                const data = await response.json();
-                
-                if (data.sucesso) {
-                    alert(`✅ Cronograma criado com sucesso!\n${data.mensagem}`);
-                    fecharModalNovoCronograma();
-                    form.reset();
-                    
-                    // Recarrega o cronograma ativo
-                    await carregarCronogramaAtivo();
+                if (resp.ok) {
+                    fecharModal();
+                    carregarRefeicoes();
                 } else {
-                    alert(`❌ Erro ao criar cronograma:\n${data.mensagem}`);
+                    const err = await resp.json();
+                    alert(err.mensagem || 'Erro ao salvar.');
                 }
-            } catch (error) {
-                console.error('Erro ao criar cronograma:', error);
-                alert('❌ Erro ao criar cronograma. Verifique sua conexão e tente novamente.');
-            }
-            
-            return false;
+            } catch (e) { console.error(e); }
+        }
+
+        async function removerRefeicao(id) {
+            if (!confirm('Remover esta refeição?')) return;
+            try {
+                const resp = await fetch(`${API_URL}/remover-refeicao-semana/${id}`, { method: 'DELETE' });
+                if (resp.ok) { carregarRefeicoes(); }
+                else { alert('Erro ao remover.'); }
+            } catch (e) { console.error(e); }
         }
     </script>
-
 </body>
 </html>

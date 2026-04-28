@@ -20,6 +20,10 @@ namespace PonteBanco
         public DbSet<CronogramaSemanal> CronogramasSemanais { get; set; }
         public DbSet<RefeicaoDiaria> RefeicoesDiarias { get; set; }
 
+        // NOVAS TABELAS: Água e Refeições Agendadas
+        public DbSet<ConsumoAgua> ConsumoAgua { get; set; }
+        public DbSet<RefeicaoAgendada> RefeicoesAgendadas { get; set; }
+
         protected override void OnConfiguring(DbContextOptionsBuilder options)
         {
             var connectionUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
