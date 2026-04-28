@@ -20,10 +20,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Garante que a pasta wwwroot (HTML, CSS, JS) seja copiada para o output -->
-    <Content Include="wwwroot\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <!-- Garante que os modelos de IA sejam levados para o servidor -->
     <None Update="Models\bsfmv1_yolo_final.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

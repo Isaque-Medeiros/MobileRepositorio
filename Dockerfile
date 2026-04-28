@@ -6,7 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copia o arquivo de projeto e restaura as dependências
-COPY *.csproj ./
+COPY MeusApp.csproj ./
 RUN dotnet restore
 
 # Copia todo o código e faz o build
