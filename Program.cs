@@ -33,6 +33,23 @@ builder.Services.AddDbContext<PonteDB>();
 
 var app = builder.Build();
 
+// Habilita CORS ANTES de qualquer rota (ordem importante!)
+app.UseCors("PermitirSite");
+
+// Middleware para garantir que OPTIONS (preflight CORS) funcione
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        context.Response.Headers.Append("Access-Control-Allow-Origin", "*");
+        context.Response.Headers.Append("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        context.Response.Headers.Append("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        return;
+    }
+    await next();
+});
+
 // Tenta conectar ao banco com retry (importante para o Render que pode demorar)
 using (var scope = app.Services.CreateScope()) {
     var db = scope.ServiceProvider.GetRequiredService<PonteDB>();
@@ -65,8 +82,6 @@ using (var scope = app.Services.CreateScope()) {
         }
     }
 }
-
-app.UseCors("PermitirSite");
 
 // --- COMANDOS PARA O SITE FUNCIONAR ---
 app.UseDefaultFiles(); // Faz o sistema procurar pelo index.html ou login.html automaticamente
