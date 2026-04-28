@@ -55,7 +55,13 @@ namespace PonteBanco
                                            $"Database={databaseUri.LocalPath.TrimStart('/')};" +
                                            $"SSL Mode={sslMode};" +
                                            $"Trust Server Certificate={trustCert};" +
-                                           "Pooling=true;";
+                                           "Pooling=true;" +
+                                           "Maximum Pool Size=20;" +
+                                           "Minimum Pool Size=2;" +
+                                           "Connection Idle Lifetime=300;" +
+                                           "Connection Pruning Interval=30;" +
+                                           "Timeout=15;" +
+                                           "Command Timeout=30;";
 
                     options.UseNpgsql(connectionString);
                 }

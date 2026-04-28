@@ -60,7 +60,7 @@ using (var scope = app.Services.CreateScope()) {
     Console.WriteLine("[POSTGRES] Tentando conectar ao banco de dados...");
     
     int tentativas = 0;
-    int maxTentativas = 5;
+    int maxTentativas = 3;
     while (tentativas < maxTentativas)
     {
         try
@@ -75,8 +75,8 @@ using (var scope = app.Services.CreateScope()) {
             Console.WriteLine($"[POSTGRES] Tentativa {tentativas}/{maxTentativas} falhou: {ex.Message}");
             if (tentativas < maxTentativas)
             {
-                Console.WriteLine("[POSTGRES] Aguardando 5 segundos para nova tentativa...");
-                Thread.Sleep(5000);
+                Console.WriteLine("[POSTGRES] Aguardando 2 segundos para nova tentativa...");
+                Thread.Sleep(2000);
             }
             else
             {
