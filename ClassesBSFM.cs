@@ -263,6 +263,7 @@ public class HistoricoProgresso
     public double IMC { get; set; }
     public DateTime DataRegistro { get; set; } = DateTime.Now;
 }
+
 }
 
 

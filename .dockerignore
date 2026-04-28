@@ -1,7 +1,8 @@
-bin/
-obj/
-.vs/
-.git/
-.gitignore
+**/bin
+**/obj
+**/.vs
+**/.vscode
+**/node_modules
 *.md
-.DS_Store
+.git
+.gitignore

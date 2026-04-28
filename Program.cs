@@ -15,6 +15,10 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configuração de logging para o Render (console)
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+
 // Configuração da Porta para o Render (usa a variável PORT fornecida pela plataforma)
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 Console.WriteLine($"[INIT] Iniciando servidor na porta {port}");
@@ -543,6 +547,44 @@ app.MapGet("/refeicoes-semana/{usuarioId}", async (int usuarioId, PonteBanco.Pon
             .OrderBy(r => r.DiaSemana)
             .ThenBy(r => r.TipoRefeicao)
             .ToListAsync();
+
+        // Se o usuário não tem refeições, copia as receitas padrão do usuário 0 (Sistema)
+        if (!refeicoes.Any() && usuarioId != 0)
+        {
+            var receitasPadrao = await db.RefeicoesAgendadas
+                .Where(r => r.UsuarioId == 0)
+                .ToListAsync();
+
+            if (receitasPadrao.Any())
+            {
+                foreach (var receita in receitasPadrao)
+                {
+                    db.RefeicoesAgendadas.Add(new RefeicaoAgendada
+                    {
+                        UsuarioId = usuarioId,
+                        DiaSemana = receita.DiaSemana,
+                        TipoRefeicao = receita.TipoRefeicao,
+                        NomePrato = receita.NomePrato,
+                        Ingredientes = receita.Ingredientes,
+                        ModoPreparo = receita.ModoPreparo,
+                        Calorias = receita.Calorias,
+                        Proteinas = receita.Proteinas,
+                        Carboidratos = receita.Carboidratos,
+                        Gorduras = receita.Gorduras,
+                        DataCriacao = DateTime.Now
+                    });
+                }
+                await db.SaveChangesAsync();
+
+                // Recarrega as refeições agora copiadas
+                refeicoes = await db.RefeicoesAgendadas
+                    .Where(r => r.UsuarioId == usuarioId)
+                    .OrderBy(r => r.DiaSemana)
+                    .ThenBy(r => r.TipoRefeicao)
+                    .ToListAsync();
+            }
+        }
+
         return Results.Ok(refeicoes);
     }
     catch (Exception ex)

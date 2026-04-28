@@ -73,8 +73,9 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; padding: 1rem; }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--bg-card); border-radius: 1.5rem; padding: 2rem; max-width: 400px; width: 100%; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
-        .modal-content input { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 2px solid #e2e8f0; outline: none; font-size: 1rem; background: rgba(241,245,249,0.8); transition: all 0.25s ease; min-height: 48px; }
-        .modal-content input:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .modal-content input, .modal-content select { width: 100%; padding: 0.75rem 1rem; border-radius: 0.75rem; border: 2px solid var(--border); outline: none; font-size: 1rem; background: var(--bg-card); color: var(--text); transition: all 0.25s ease; min-height: 48px; }
+        .modal-content input:focus, .modal-content select:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .modal-content input::placeholder { color: var(--text-secondary); }
         .theme-btn { width: 44px; height: 44px; min-width: 44px; min-height: 44px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s ease; }
         .theme-btn:hover { transform: translateY(-2px); }
         @media (max-width: 480px) { .profile-card { padding: 1.25rem; } .profile-avatar { width: 60px; height: 60px; font-size: 1.5rem; } .water-btn { width: 50px; height: 50px; min-width: 50px; min-height: 50px; font-size: 0.7rem; } }
@@ -218,6 +219,10 @@
                         <button onclick="registrarAgua(200)" class="water-btn bg-blue-100 text-blue-700">200ml</button>
                         <button onclick="registrarAgua(300)" class="water-btn bg-blue-200 text-blue-800">300ml</button>
                         <button onclick="registrarAgua(500)" class="water-btn bg-blue-300 text-blue-900">500ml</button>
+                    </div>
+                    <div class="flex gap-2 items-center justify-center">
+                        <input type="number" id="inputAguaPersonalizado" min="1" max="5000" placeholder="Digite ml" class="w-28 px-3 py-2 rounded-xl border-2 border-blue-200 bg-white/80 text-blue-800 font-semibold text-sm text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none">
+                        <button onclick="registrarAguaPersonalizado()" class="px-4 py-2 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition active:scale-95">Adicionar</button>
                     </div>
                     <div class="mt-4">
                         <h4 class="text-xs md:text-sm font-bold mb-2" style="color: var(--text);">Consumo Semanal</h4>
@@ -510,7 +515,7 @@
             const resp = await fetch(`${API_URL}/usuario/atualizar-senha`, {
                 method: 'PUT',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ UsuarioId: userLocal.id, Senha: novaSenha })
+                body: JSON.stringify({ UsuarioId: userLocal.id, NovaSenha: novaSenha })
             });
             if (resp.ok) {
                 fecharModal('senha');
@@ -547,7 +552,7 @@
             const resp = await fetch(`${API_URL}/agua-diario/${userLocal.id}`);
             if (resp.ok) {
                 const data = await resp.json();
-                const total = data.total || 0;
+                const total = data.totalMl || data.total || 0;
                 const porc = Math.min((total / 2000) * 100, 100);
                 document.getElementById('waterTotal').innerText = total;
                 document.getElementById('waterPercent').innerText = Math.round(porc) + '%';
@@ -566,8 +571,9 @@
                 const container = document.getElementById('waterWeek');
                 const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
                 container.innerHTML = '';
-                data.forEach((dia, i) => {
-                    const total = dia.total || 0;
+                const semana = data.semana || data;
+                semana.forEach((dia, i) => {
+                    const total = dia.totalMl || dia.total || 0;
                     const cor = total >= 2000 ? 'bg-emerald-500' : total >= 1000 ? 'bg-blue-400' : 'bg-slate-200';
                     container.innerHTML += `<div class="p-1"><div class="${cor} rounded-lg p-2 text-white text-[10px] font-bold">${dias[i]}<br>${total}ml</div></div>`;
                 });
@@ -580,13 +586,24 @@
             const resp = await fetch(`${API_URL}/registrar-agua`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ UsuarioId: userLocal.id, QuantidadeMl: ml })
+                body: JSON.stringify({ UsuarioId: userLocal.id, Ml: ml })
             });
             if (resp.ok) {
                 await carregarAgua();
                 await carregarAguaSemanal();
             }
         } catch(e) { console.error(e); }
+    }
+
+    async function registrarAguaPersonalizado() {
+        const input = document.getElementById('inputAguaPersonalizado');
+        const ml = parseInt(input.value);
+        if (!ml || ml <= 0 || ml > 5000) {
+            alert('Digite um valor entre 1 e 5000 ml.');
+            return;
+        }
+        await registrarAgua(ml);
+        input.value = '';
     }
 
     // ====== SAIR ======

@@ -1,22 +1,147 @@
 -- ============================================================
--- SCRIPT DE ATUALIZAÇÃO BSFM v1.2
--- Execute no SQL Editor do Neon
+-- SCRIPT SQL COMPLETO - BSFM (Banco de Saúde e Fitness Monitor)
+-- Execute no SQL Editor do Neon (PostgreSQL)
 -- ============================================================
 
 -- ============================================================
--- 1. CRIAR USUÁRIO SISTEMA (ID = 0) PARA RECEITAS PADRÃO
+-- 1. TABELA: Usuarios
 -- ============================================================
-INSERT INTO "Usuarios" ("ID", "Nome", "Email", "SenhaHash", "Peso", "Altura", "Idade", "Sexo", "TipoPessoa", "EmailVerificado", "DataNascimento")
-VALUES (0, 'Sistema BSFM', 'sistema@bsfm.com', 'sistema', 70, 1.70, 30, 'M', 'Sistema', true, NULL)
-ON CONFLICT ("ID") DO NOTHING;
+CREATE TABLE IF NOT EXISTS "Usuarios" (
+    "ID" SERIAL PRIMARY KEY,
+    "Nome" TEXT NOT NULL DEFAULT '',
+    "Idade" INTEGER NOT NULL DEFAULT 0,
+    "Email" TEXT NOT NULL DEFAULT '',
+    "TokenVerificacao" TEXT,
+    "EmailVerificado" BOOLEAN NOT NULL DEFAULT FALSE,
+    "SenhaHash" TEXT NOT NULL DEFAULT '',
+    "AceitouTermos" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DataAceite" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "VersaoTermos" TEXT NOT NULL DEFAULT '',
+    "Sexo" TEXT NOT NULL DEFAULT 'Não Informado',
+    "Peso" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Altura" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "TipoPessoa" TEXT NOT NULL DEFAULT 'Sedentário',
+    "Intolerancia" TEXT NOT NULL DEFAULT '',
+    "IMC" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "TMB" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "GastoTotal" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "PesoMeta" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "DataNascimento" TIMESTAMP
+);
 
 -- ============================================================
--- 2. ADICIONAR COLUNA DataNascimento NA TABELA Usuarios
+-- 2. TABELA: Refeicoes
 -- ============================================================
-ALTER TABLE "Usuarios" ADD COLUMN IF NOT EXISTS "DataNascimento" TIMESTAMP;
+CREATE TABLE IF NOT EXISTS "Refeicoes" (
+    "ID" SERIAL PRIMARY KEY,
+    "NomeRefeição" TEXT NOT NULL DEFAULT '',
+    "Categoria" TEXT NOT NULL DEFAULT '',
+    "Ingredientes" TEXT NOT NULL DEFAULT '',
+    "Calorias" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Proteínas" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Carboidratos" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Gorduras" DOUBLE PRECISION NOT NULL DEFAULT 0
+);
 
 -- ============================================================
--- 2. CRIAR TABELA: ConsumoAgua
+-- 3. TABELA: Comidas
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "Comidas" (
+    "ID" SERIAL PRIMARY KEY,
+    "NomeComida" TEXT NOT NULL DEFAULT '',
+    "Categoria" TEXT NOT NULL DEFAULT '',
+    "Calorias" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Proteínas" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Carboidratos" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Gorduras" DOUBLE PRECISION NOT NULL DEFAULT 0
+);
+
+-- ============================================================
+-- 4. TABELA: Cronogramas
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "Cronogramas" (
+    "ID" SERIAL PRIMARY KEY,
+    "UsuarioID" INTEGER REFERENCES "Usuarios"("ID"),
+    "Refeições" TEXT NOT NULL DEFAULT '',
+    "Planos" TEXT NOT NULL DEFAULT ''
+);
+
+-- ============================================================
+-- 5. TABELA: Hospitais
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "Hospitais" (
+    "ID" SERIAL PRIMARY KEY,
+    "NomeHospital" TEXT NOT NULL DEFAULT '',
+    "Endereço" TEXT NOT NULL DEFAULT '',
+    "Telefone" TEXT NOT NULL DEFAULT ''
+);
+
+-- ============================================================
+-- 6. TABELA: AnalisesIA
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "AnalisesIA" (
+    "ID" SERIAL PRIMARY KEY,
+    "UsuarioID" INTEGER NOT NULL REFERENCES "Usuarios"("ID"),
+    "Alimento" TEXT NOT NULL DEFAULT '',
+    "Calorias" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Proteinas" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Carbos" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Gorduras" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Porcao" TEXT NOT NULL DEFAULT '',
+    "DataAnalise" TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- 7. TABELA: Historicos (Evolução de Peso/IMC)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "Historicos" (
+    "ID" SERIAL PRIMARY KEY,
+    "UsuarioID" INTEGER NOT NULL REFERENCES "Usuarios"("ID"),
+    "Peso" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "Altura" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "IMC" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "DataRegistro" TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- 8. TABELA: CronogramasSemanais
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "CronogramasSemanais" (
+    "Id" SERIAL PRIMARY KEY,
+    "UsuarioId" INTEGER NOT NULL REFERENCES "Usuarios"("ID"),
+    "DataInicio" TIMESTAMP NOT NULL,
+    "DataFim" TIMESTAMP NOT NULL,
+    "NomePlano" VARCHAR(100) NOT NULL DEFAULT '',
+    "Observacoes" VARCHAR(500) NOT NULL DEFAULT '',
+    "DataCriacao" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "DataUltimaAtualizacao" TIMESTAMP
+);
+
+-- ============================================================
+-- 9. TABELA: RefeicoesDiarias
+-- ============================================================
+CREATE TABLE IF NOT EXISTS "RefeicoesDiarias" (
+    "Id" SERIAL PRIMARY KEY,
+    "CronogramaSemanalId" INTEGER NOT NULL REFERENCES "CronogramasSemanais"("Id") ON DELETE CASCADE,
+    "DiaSemana" INTEGER NOT NULL,
+    "NomeRefeicao" VARCHAR(100) NOT NULL DEFAULT '',
+    "Horario" TIME NOT NULL,
+    "Descricao" VARCHAR(500) NOT NULL DEFAULT '',
+    "Calorias" INTEGER,
+    "Proteinas" DECIMAL,
+    "Carboidratos" DECIMAL,
+    "Gorduras" DECIMAL,
+    "Fibra" DECIMAL,
+    "Ingredientes" VARCHAR(500) NOT NULL DEFAULT '',
+    "InstrucoesPreparo" VARCHAR(1000) NOT NULL DEFAULT '',
+    "EstaConcluida" BOOLEAN NOT NULL DEFAULT FALSE,
+    "DataConclusao" TIMESTAMP,
+    "DataCriacao" TIMESTAMP NOT NULL DEFAULT NOW(),
+    "DataUltimaAtualizacao" TIMESTAMP
+);
+
+-- ============================================================
+-- 10. TABELA: ConsumoAgua
 -- ============================================================
 CREATE TABLE IF NOT EXISTS "ConsumoAgua" (
     "Id" SERIAL PRIMARY KEY,
@@ -25,11 +150,8 @@ CREATE TABLE IF NOT EXISTS "ConsumoAgua" (
     "DataRegistro" TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_consumo_agua_usuario ON "ConsumoAgua"("UsuarioId");
-CREATE INDEX IF NOT EXISTS idx_consumo_agua_data ON "ConsumoAgua"("DataRegistro");
-
 -- ============================================================
--- 3. CRIAR TABELA: RefeicoesAgendadas
+-- 11. TABELA: RefeicoesAgendadas (Pratos da Semana)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS "RefeicoesAgendadas" (
     "Id" SERIAL PRIMARY KEY,
@@ -46,10 +168,26 @@ CREATE TABLE IF NOT EXISTS "RefeicoesAgendadas" (
     "DataCriacao" TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- ============================================================
+-- ÍNDICES PARA MELHOR PERFORMANCE
+-- ============================================================
+CREATE INDEX IF NOT EXISTS idx_analises_ia_usuario ON "AnalisesIA"("UsuarioID");
+CREATE INDEX IF NOT EXISTS idx_historicos_usuario ON "Historicos"("UsuarioID");
+CREATE INDEX IF NOT EXISTS idx_cronogramas_semanais_usuario ON "CronogramasSemanais"("UsuarioId");
+CREATE INDEX IF NOT EXISTS idx_refeicoes_diarias_cronograma ON "RefeicoesDiarias"("CronogramaSemanalId");
+CREATE INDEX IF NOT EXISTS idx_consumo_agua_usuario ON "ConsumoAgua"("UsuarioId");
+CREATE INDEX IF NOT EXISTS idx_consumo_agua_data ON "ConsumoAgua"("DataRegistro");
 CREATE INDEX IF NOT EXISTS idx_refeicoes_agendadas_usuario ON "RefeicoesAgendadas"("UsuarioId");
 
 -- ============================================================
--- 4. INSERIR RECEITAS SAUDÁVEIS PRÉ-CARREGADAS
+-- INSERIR USUÁRIO SISTEMA (ID = 0) PARA RECEITAS PADRÃO
+-- ============================================================
+INSERT INTO "Usuarios" ("ID", "Nome", "Email", "SenhaHash", "Peso", "Altura", "Idade", "Sexo", "TipoPessoa", "EmailVerificado", "DataNascimento")
+VALUES (0, 'Sistema BSFM', 'sistema@bsfm.com', 'sistema', 70, 1.70, 30, 'M', 'Sistema', true, NULL)
+ON CONFLICT ("ID") DO NOTHING;
+
+-- ============================================================
+-- RECEITAS SAUDÁVEIS PRÉ-CARREGADAS (Usuário 0 = Sistema)
 -- ============================================================
 INSERT INTO "RefeicoesAgendadas" ("UsuarioId", "DiaSemana", "TipoRefeicao", "NomePrato", "Ingredientes", "ModoPreparo", "Calorias", "Proteinas", "Carboidratos", "Gorduras")
 VALUES

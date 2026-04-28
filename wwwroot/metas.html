@@ -33,9 +33,9 @@
         .card:hover { transform: translateY(-2px); box-shadow: 0 16px 40px -10px rgba(16, 185, 129, 0.12); border-color: #a7f3d0; }
         .progress-track { background: linear-gradient(90deg, #e2e8f0 0%, #cbd5e1 100%); border-radius: 9999px; overflow: hidden; height: 0.625rem; }
         .progress-fill { background: linear-gradient(90deg, #10b981 0%, #34d399 100%); border-radius: 9999px; transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); height: 100%; }
-        .input-field { background: rgba(241, 245, 249, 0.8); border: 2px solid #e2e8f0; border-radius: 1rem; padding: 1rem 1.25rem; font-size: 1rem; font-weight: 500; transition: all 0.25s ease; outline: none; }
-        .input-field:focus { border-color: #10b981; background: white; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
-        .input-field::placeholder { color: #94a3b8; }
+        .input-field { background: var(--bg-card); border: 2px solid var(--border); border-radius: 1rem; padding: 1rem 1.25rem; font-size: 1rem; font-weight: 500; transition: all 0.25s ease; outline: none; color: var(--text); }
+        .input-field:focus { border-color: #10b981; background: var(--bg-card); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+        .input-field::placeholder { color: var(--text-secondary); }
         .btn-primary { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; font-weight: 600; padding: 1rem 1.75rem; border-radius: 1rem; transition: all 0.3s ease; box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.3); border: none; cursor: pointer; min-height: 48px; }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.4); }
         .btn-primary:active { transform: translateY(0); }

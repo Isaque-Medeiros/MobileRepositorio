@@ -7,9 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.*" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.*" />
-    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.*" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.11" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.11" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageReference Include="MailKit" Version="4.10.0" />
     <PackageReference Include="MimeKit" Version="4.10.0" />
@@ -20,11 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Isso garante que os HTMLs na raiz sejam copiados para a pasta de saída do Railway -->
-    <Content Include="*.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <!-- Garante que a pasta wwwroot (HTML, CSS, JS) seja copiada para o output -->
+    <Content Include="wwwroot\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <!-- Garante que os modelos de IA sejam levados para o servidor do Railway -->
+    <!-- Garante que os modelos de IA sejam levados para o servidor -->
     <None Update="Models\bsfmv1_yolo_final.onnx">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

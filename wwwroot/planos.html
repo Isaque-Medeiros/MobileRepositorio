@@ -25,8 +25,9 @@
         .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; }
         .modal-overlay.active { display: flex; }
         .modal-content { background: var(--bg-card); border-radius: 1.5rem; padding: 2rem; max-width: 500px; width: 90%; border: 1px solid var(--border); max-height: 90vh; overflow-y: auto; }
-        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 2px solid #e2e8f0; outline: none; font-size: 0.95rem; background: rgba(241,245,249,0.8); transition: all 0.25s; margin-bottom: 0.75rem; }
+        .modal-content input, .modal-content select, .modal-content textarea { width: 100%; padding: 0.75rem; border-radius: 0.75rem; border: 2px solid var(--border); outline: none; font-size: 0.95rem; background: var(--bg-card); color: var(--text); transition: all 0.25s; margin-bottom: 0.75rem; }
         .modal-content input:focus, .modal-content select:focus, .modal-content textarea:focus { border-color: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.1); }
+        .modal-content input::placeholder, .modal-content textarea::placeholder { color: var(--text-secondary); }
         .modal-content textarea { resize: vertical; min-height: 80px; }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 10px; }
