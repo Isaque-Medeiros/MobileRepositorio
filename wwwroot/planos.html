@@ -153,6 +153,9 @@
     </div>
 
     <script>
+        // URL da API - altere para a URL do seu backend depois do deploy no Render
+        const API_URL = 'https://bsfm-dev-version.vercel.app';
+
         let diaAtual = 'Segunda';
         let cronogramaAtivo = null;
 
@@ -190,7 +193,7 @@
         // Carrega o cronograma ativo do usuário
         async function carregarCronogramaAtivo() {
             try {
-                const response = await fetch('/api/planoalimentar/cronograma-ativo');
+                const response = await fetch(`${API_URL}/api/planoalimentar/cronograma-ativo`);
                 const data = await response.json();
                 
                 if (data.sucesso) {
@@ -213,7 +216,7 @@
         // Carrega as refeições de um dia específico
         async function carregarRefeicoesDoDia(dia) {
             try {
-                const response = await fetch(`/api/planoalimentar/refeicoes-dia/${dia}`);
+                const response = await fetch(`${API_URL}/api/planoalimentar/refeicoes-dia/${dia}`);
                 const data = await response.json();
                 
                 if (data.sucesso) {
@@ -231,7 +234,7 @@
         // Carrega o resumo nutricional do dia
         async function carregarResumoNutricional(dia) {
             try {
-                const response = await fetch(`/api/planoalimentar/resumo-dia/${dia}`);
+                const response = await fetch(`${API_URL}/api/planoalimentar/resumo-dia/${dia}`);
                 const data = await response.json();
                 
                 if (data.sucesso) {
@@ -313,7 +316,7 @@
         // Marca uma refeição como concluída
         async function concluirRefeicao(refeicaoId) {
             try {
-                const response = await fetch(`/api/planoalimentar/refeicao/${refeicaoId}/concluir`, {
+                const response = await fetch(`${API_URL}/api/planoalimentar/refeicao/${refeicaoId}/concluir`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -432,7 +435,7 @@
                     
                     try {
                         // Simula a chamada para o backend
-                        const response = await fetch('/api/planoalimentar/importar-prescricao', {
+                        const response = await fetch(`${API_URL}/api/planoalimentar/importar-prescricao`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json'
@@ -518,6 +521,9 @@
     </div>
 
     <script>
+        // URL da API - altere para a URL do seu backend depois do deploy no Render
+        const API_URL = 'https://bsfm-dev-version.vercel.app';
+
         // Funções para o modal de novo cronograma
         function abrirModalNovoCronograma() {
             const modal = document.getElementById('modalNovoCronograma');
@@ -552,7 +558,7 @@
             };
 
             try {
-                const response = await fetch('/api/planoalimentar/criar-cronograma', {
+                const response = await fetch(`${API_URL}/api/planoalimentar/criar-cronograma`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

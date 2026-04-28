@@ -1,40 +1,32 @@
-# ============================================
-# ESTÁGIO 1: BUILD
-# ============================================
+# Usa a imagem oficial do .NET 8 SDK para build
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /app
 
 # Copia o arquivo de projeto e restaura as dependências
-COPY MeusApp.csproj .
+COPY *.csproj ./
 RUN dotnet restore
 
-# Copia todo o restante do código
-COPY . .
+# Copia todo o código e faz o build
+COPY . ./
+RUN dotnet publish -c Release -o out
 
-# Publica a aplicação em modo Release
-RUN dotnet publish -c Release -o /app/publish
-
-# ============================================
-# ESTÁGIO 2: RUNTIME
-# ============================================
+# Imagem runtime menor para produção
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
-# Instala dependências nativas necessárias para SkiaSharp e ONNX Runtime
+# Instala dependências necessárias para o SkiaSharp no Linux
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libc6-dev \
-    libgdiplus \
-    libx11-dev \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install -y libfontconfig1 libfreetype6 libharfbuzz0b libpng16-16 && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copia os arquivos publicados do estágio de build
-COPY --from=build /app/publish .
+# Copia o build da etapa anterior
+COPY --from=build /app/out .
 
-# Expõe a porta que o Vercel vai definir via variável PORT
+# Expõe a porta que o Render vai usar
 EXPOSE 8080
 
-# Define o entrypoint
-ENV ASPNETCORE_URLS=http://+:8080
+# Define a variável de ambiente para produção
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Inicia a aplicação
 ENTRYPOINT ["dotnet", "MeusApp.dll"]

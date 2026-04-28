@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bsfm-api
+    env: docker
+    repo: https://github.com/Isaque-Medeiros/MobileRepositorio
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
