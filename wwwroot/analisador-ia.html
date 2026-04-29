@@ -48,11 +48,15 @@
         }
     </script>
     <style>
+        :root { --bg: #000000; --bg-card: #1a1a1a; --text: #f1f5f9; --text-secondary: #94a3b8; --border: rgba(51,65,85,0.6); }
+        .light-mode { --bg: #f0fdf4; --bg-card: rgba(255,255,255,0.95); --text: #1e293b; --text-secondary: #64748b; --border: rgba(226,232,240,0.8); }
         body { 
             font-family: 'Inter', sans-serif; 
             overflow-x: hidden;
-            background: linear-gradient(135deg, #f0fdf4 0%, #f8fafc 50%, #f0fdf4 100%);
+            background: var(--bg);
             min-height: 100vh;
+            color: var(--text);
+            transition: background 0.3s, color 0.3s;
         }
 
         /* Custom scrollbar */
@@ -71,6 +75,9 @@
             overflow: hidden; 
             border: 3px solid #10b981;
             box-shadow: 0 25px 50px -12px rgba(16, 185, 129, 0.25);
+        }
+        body:not(.light-mode) .view-box {
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.15), 0 0 3px rgba(16, 185, 129, 0.3);
         }
         #video, #imgPreview { 
             width: 100%; 
@@ -120,13 +127,14 @@
             align-items: center;
             justify-content: center;
             padding: 1.25rem;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #e2e8f0;
+            background: var(--bg-card);
+            border: 2px solid var(--border);
             border-radius: 1.25rem;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
             position: relative;
             overflow: hidden;
+            color: var(--text);
         }
         .mode-btn::before {
             content: '';
@@ -148,6 +156,7 @@
             border-color: #10b981;
             background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
             box-shadow: 0 8px 20px -6px rgba(16, 185, 129, 0.2);
+            color: #1e293b;
         }
         .mode-btn i {
             font-size: 1.5rem;
@@ -162,16 +171,18 @@
         .portion-btn {
             padding: 0.875rem 1rem;
             border-radius: 1rem;
-            border: 2px solid #e2e8f0;
-            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--border);
+            background: var(--bg-card);
             font-weight: 600;
             font-size: 0.875rem;
             transition: all 0.25s ease;
             cursor: pointer;
+            color: var(--text);
         }
         .portion-btn:hover {
             border-color: #10b981;
             background: #ecfdf5;
+            color: #1e293b;
         }
         .portion-btn.active {
             border-color: #10b981;
@@ -226,12 +237,15 @@
 
         /* Result card */
         .result-card {
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-card);
             backdrop-filter: blur(10px);
             border-radius: 1.75rem;
             overflow: hidden;
             box-shadow: 0 20px 40px -10px rgba(16, 185, 129, 0.15);
-            border: 1px solid #a7f3d0;
+            border: 1px solid var(--border);
+        }
+        body:not(.light-mode) .result-card {
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.08), 0 0 1px rgba(16, 185, 129, 0.2);
         }
         .result-header {
             background: linear-gradient(135deg, #10b981 0%, #059669 100%);
@@ -273,16 +287,45 @@
             justify-content: center;
             width: 48px;
             height: 48px;
-            background: rgba(255, 255, 255, 0.95);
+            background: var(--bg-card);
             border-radius: 1rem;
-            color: #64748b;
+            color: var(--text-secondary);
             transition: all 0.25s ease;
             box-shadow: 0 4px 12px -4px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border);
         }
         .back-btn:hover {
             background: #ecfdf5;
             color: #10b981;
             transform: translateX(-4px);
+        }
+
+        /* Theme button */
+        .theme-btn {
+            width: 44px;
+            height: 44px;
+            min-width: 44px;
+            min-height: 44px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .theme-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Stats boxes in result */
+        .stat-box {
+            background: var(--bg);
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 1px solid var(--border);
         }
     </style>
 </head>
@@ -296,15 +339,18 @@
                     <i class="fas fa-chevron-left text-lg"></i>
                 </a>
                 <div>
-                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                    <h1 class="text-2xl font-bold" style="color: var(--text);">
                         Análise de Prato <span class="text-emerald-600">IA</span>
                     </h1>
-                    <p class="text-slate-500 text-sm">Reconhecimento inteligente de alimentos</p>
+                    <p style="color: var(--text-secondary);" class="text-sm">Reconhecimento inteligente de alimentos</p>
                 </div>
             </div>
-            <div class="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                <span class="text-xs font-bold uppercase tracking-tighter">Online</span>
+            <div class="flex items-center gap-2">
+                <button onclick="toggleTheme()" class="theme-btn" title="Alternar Tema"><i id="themeIcon" class="fas fa-sun"></i></button>
+                <div class="flex items-center gap-2 bg-emerald-100 text-emerald-700 px-4 py-2 rounded-full">
+                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                    <span class="text-xs font-bold uppercase tracking-tighter">Online</span>
+                </div>
             </div>
         </header>
 
@@ -354,8 +400,8 @@
         </div>
 
         <!-- Portion Selector -->
-        <div class="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-sm mb-6 border border-slate-200 opacity-0 animate-fade-in-up animate-delay-300">
-            <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Tamanho da Porção</label>
+        <div class="p-6 rounded-2xl mb-6 opacity-0 animate-fade-in-up animate-delay-300" style="background: var(--bg-card); border: 1px solid var(--border);">
+            <label class="block text-xs font-bold uppercase tracking-widest mb-4" style="color: var(--text-secondary);">Tamanho da Porção</label>
             <div class="grid grid-cols-3 gap-3">
                 <button onclick="selecionarPorcao('pequeno', this)" class="portion-btn" id="porcaoPequeno">
                     <i class="fas fa-circle text-xs text-slate-400 mr-1"></i>
@@ -399,19 +445,19 @@
                 </div>
                 <div class="result-body">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-slate-50 rounded-xl p-4">
-                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Energia</p>
-                            <p id="kcal" class="text-2xl font-bold text-slate-800">--</p>
-                            <p class="text-xs text-slate-500 mt-1">Kcal estimadas</p>
+                        <div class="stat-box">
+                            <p class="text-[10px] uppercase font-bold mb-1" style="color: var(--text-secondary);">Energia</p>
+                            <p id="kcal" class="text-2xl font-bold" style="color: var(--text);">--</p>
+                            <p class="text-xs mt-1" style="color: var(--text-secondary);">Kcal estimadas</p>
                         </div>
-                        <div class="bg-slate-50 rounded-xl p-4">
-                            <p class="text-[10px] uppercase font-bold text-slate-400 mb-1">Macros</p>
+                        <div class="stat-box">
+                            <p class="text-[10px] uppercase font-bold mb-1" style="color: var(--text-secondary);">Macros</p>
                             <div class="text-sm font-bold text-emerald-600" id="macros-short">--</div>
-                            <p class="text-xs text-slate-500 mt-1">Proteínas, Carbos, Gorduras</p>
+                            <p class="text-xs mt-1" style="color: var(--text-secondary);">Proteínas, Carbos, Gorduras</p>
                         </div>
                     </div>
-                    <div class="mt-4 pt-4 border-t border-slate-100 text-center">
-                        <p class="text-xs text-slate-400 italic">
+                    <div class="mt-4 pt-4 text-center" style="border-top: 1px solid var(--border);">
+                        <p class="text-xs italic" style="color: var(--text-secondary);">
                             <i class="fas fa-info-circle mr-1"></i>
                             Os dados salvos ficarão disponíveis por 2 dias em seu diário.
                         </p>
@@ -575,6 +621,28 @@
     function resetUI() {
         document.getElementById('loader').classList.add('hidden');
         document.getElementById('btnSubmit').classList.remove('hidden');
+    }
+
+    // ====== TEMA ======
+    function toggleTheme() {
+        document.body.classList.toggle('light-mode');
+        const icon = document.getElementById('themeIcon');
+        if (document.body.classList.contains('light-mode')) {
+            icon.className = 'fas fa-moon';
+            localStorage.setItem('bsfmTheme', 'light');
+        } else {
+            icon.className = 'fas fa-sun';
+            localStorage.setItem('bsfmTheme', 'dark');
+        }
+    }
+
+    // Carregar tema salvo (padrão é escuro)
+    if (localStorage.getItem('bsfmTheme') !== 'light') {
+        document.body.classList.remove('light-mode');
+        document.getElementById('themeIcon').className = 'fas fa-sun';
+    } else {
+        document.body.classList.add('light-mode');
+        document.getElementById('themeIcon').className = 'fas fa-moon';
     }
 </script>
 

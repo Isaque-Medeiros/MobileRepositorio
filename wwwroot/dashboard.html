@@ -25,6 +25,28 @@
         :root { --bg: #000000; --bg-card: #1a1a1a; --text: #f1f5f9; --text-secondary: #94a3b8; --border: rgba(51,65,85,0.6); --sidebar-bg: rgba(10,10,10,0.95); }
         .light-mode { --bg: #f0fdf4; --bg-card: rgba(255,255,255,0.95); --text: #1e293b; --text-secondary: #64748b; --border: rgba(226,232,240,0.8); --sidebar-bg: rgba(255,255,255,0.85); }
         body { font-family: 'Inter', sans-serif; overflow-x: hidden; background: var(--bg); min-height: 100vh; color: var(--text); transition: background 0.3s, color 0.3s; }
+        
+        /* Neon glow effect for dark mode - subtle and professional */
+        body:not(.light-mode) .card-metric,
+        body:not(.light-mode) .card-feature {
+            box-shadow: 0 0 6px rgba(16, 185, 129, 0.08), 0 0 1px rgba(16, 185, 129, 0.2);
+        }
+        body:not(.light-mode) .card-metric:hover,
+        body:not(.light-mode) .card-feature:hover {
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.15), 0 0 3px rgba(16, 185, 129, 0.3);
+        }
+        body:not(.light-mode) .nav-item:hover,
+        body:not(.light-mode) .nav-item.active {
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.12);
+        }
+        /* Remove white shadow backgrounds in dark mode */
+        body:not(.light-mode) [class*="shadow-emerald"],
+        body:not(.light-mode) [class*="shadow-blue"],
+        body:not(.light-mode) [class*="shadow-red"],
+        body:not(.light-mode) [class*="shadow-orange"],
+        body:not(.light-mode) [class*="shadow-green"] {
+            box-shadow: none !important;
+        }
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #a7f3d0; border-radius: 10px; }
@@ -220,9 +242,10 @@
                         <button onclick="registrarAgua(300)" class="water-btn bg-blue-200 text-blue-800">300ml</button>
                         <button onclick="registrarAgua(500)" class="water-btn bg-blue-300 text-blue-900">500ml</button>
                     </div>
-                    <div class="flex gap-2 items-center justify-center">
-                        <input type="number" id="inputAguaPersonalizado" min="1" max="5000" placeholder="Digite ml" class="w-28 px-3 py-2 rounded-xl border-2 border-blue-200 bg-white/80 text-blue-800 font-semibold text-sm text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none">
+                    <div class="flex gap-2 items-center justify-center flex-wrap">
+                        <input type="number" id="inputAguaPersonalizado" min="1" max="5000" placeholder="Digite ml" class="w-24 md:w-28 px-3 py-2 rounded-xl border-2 border-blue-200 bg-white/80 text-blue-800 font-semibold text-sm text-center focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none">
                         <button onclick="registrarAguaPersonalizado()" class="px-4 py-2 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-600 transition active:scale-95">Adicionar</button>
+                        <button onclick="removerUltimaAgua()" class="px-4 py-2 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition active:scale-95" title="Desfazer último registro"><i class="fas fa-undo mr-1"></i>Desfazer</button>
                     </div>
                     <div class="mt-4">
                         <h4 class="text-xs md:text-sm font-bold mb-2" style="color: var(--text);">Consumo Semanal</h4>
@@ -572,10 +595,21 @@
                 const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
                 container.innerHTML = '';
                 const semana = data.semana || data;
+                const hoje = new Date().getDay(); // 0=Dom, 1=Seg, ..., 6=Sáb
                 semana.forEach((dia, i) => {
                     const total = dia.totalMl || dia.total || 0;
-                    const cor = total >= 2000 ? 'bg-emerald-500' : total >= 1000 ? 'bg-blue-400' : 'bg-slate-200';
-                    container.innerHTML += `<div class="p-1"><div class="${cor} rounded-lg p-2 text-white text-[10px] font-bold">${dias[i]}<br>${total}ml</div></div>`;
+                    const isToday = (i === hoje);
+                    // Cor baseada no consumo
+                    let cor = 'bg-slate-300 text-slate-700';
+                    if (total > 0) cor = 'bg-blue-500 text-white';
+                    if (total >= 2000) cor = 'bg-emerald-500 text-white';
+                    // Se for hoje e tem registro, destaca com tom mais forte
+                    if (isToday && total > 0) cor = 'bg-blue-600 text-white ring-2 ring-blue-300';
+                    if (isToday && total >= 2000) cor = 'bg-emerald-600 text-white ring-2 ring-emerald-300';
+                    // Se for hoje mas sem registro, mostra como pendente
+                    if (isToday && total === 0) cor = 'bg-amber-100 text-amber-800 border border-amber-300';
+                    
+                    container.innerHTML += `<div class="p-0.5 md:p-1"><div class="${cor} rounded-lg p-1.5 md:p-2 text-white text-[11px] md:text-[13px] font-bold leading-tight overflow-hidden text-center">${dias[i]}<br><span class="text-[10px] md:text-[12px] whitespace-nowrap">${total >= 1000 ? (total/1000).toFixed(1)+'L' : total+'ml'}</span></div></div>`;
                 });
             }
         } catch(e) { console.error(e); }
@@ -604,6 +638,23 @@
         }
         await registrarAgua(ml);
         input.value = '';
+    }
+
+    // ====== REMOVER ÚLTIMO REGISTRO DE ÁGUA ======
+    async function removerUltimaAgua() {
+        if (!confirm('Desfazer o último registro de água?')) return;
+        try {
+            const resp = await fetch(`${API_URL}/remover-ultima-agua/${userLocal.id}`, {
+                method: 'DELETE'
+            });
+            if (resp.ok) {
+                await carregarAgua();
+                await carregarAguaSemanal();
+            } else {
+                const data = await resp.json();
+                alert(data.mensagem || 'Nenhum registro para desfazer hoje.');
+            }
+        } catch(e) { console.error(e); alert('Erro de conexão.'); }
     }
 
     // ====== SAIR ======

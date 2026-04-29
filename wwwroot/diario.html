@@ -55,6 +55,102 @@
         </div>
     </div>
 
+    <!-- ====== MODAL SALVAR NOS PLANOS ====== -->
+    <div id="modalPlano" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
+        <div class="w-full max-w-md rounded-3xl p-6 md:p-8 shadow-2xl" style="background: var(--bg-card); border: 1px solid var(--border);">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-bold" style="color: var(--text);">
+                    <i class="fas fa-calendar-plus text-emerald-500 mr-2"></i>
+                    Adicionar aos Planos
+                </h3>
+                <button onclick="fecharModalPlano()" class="w-10 h-10 rounded-xl flex items-center justify-center" style="background: var(--bg); color: var(--text-secondary);">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <input type="hidden" id="planoAnaliseId">
+            
+            <div class="space-y-4">
+                <!-- Nome do Prato -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">Nome do Prato</label>
+                    <input id="planoNomePrato" type="text" 
+                           class="w-full px-4 py-3 rounded-2xl font-medium outline-none transition"
+                           style="background: var(--bg); color: var(--text); border: 1px solid var(--border);"
+                           placeholder="Ex: Arroz com frango">
+                </div>
+
+                <!-- Ingredientes -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">Ingredientes</label>
+                    <textarea id="planoIngredientes" rows="3"
+                              class="w-full px-4 py-3 rounded-2xl font-medium outline-none transition resize-none"
+                              style="background: var(--bg); color: var(--text); border: 1px solid var(--border);"
+                              placeholder="Liste os ingredientes..."></textarea>
+                </div>
+
+                <!-- Dia da Semana -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">Dia da Semana</label>
+                    <select id="planoDiaSemana" 
+                            class="w-full px-4 py-3 rounded-2xl font-medium outline-none transition"
+                            style="background: var(--bg); color: var(--text); border: 1px solid var(--border);">
+                        <option value="Segunda">Segunda-feira</option>
+                        <option value="Terca">Terça-feira</option>
+                        <option value="Quarta">Quarta-feira</option>
+                        <option value="Quinta">Quinta-feira</option>
+                        <option value="Sexta">Sexta-feira</option>
+                        <option value="Sabado">Sábado</option>
+                        <option value="Domingo">Domingo</option>
+                    </select>
+                </div>
+
+                <!-- Tipo de Refeição -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider mb-2" style="color: var(--text-secondary);">Tipo de Refeição</label>
+                    <select id="planoTipoRefeicao" 
+                            class="w-full px-4 py-3 rounded-2xl font-medium outline-none transition"
+                            style="background: var(--bg); color: var(--text); border: 1px solid var(--border);">
+                        <option value="Café da Manhã">Café da Manhã</option>
+                        <option value="Almoço">Almoço</option>
+                        <option value="Jantar">Jantar</option>
+                        <option value="Lanche">Lanche</option>
+                    </select>
+                </div>
+
+                <!-- Macros (readonly) -->
+                <div class="grid grid-cols-3 gap-3 p-4 rounded-2xl" style="background: var(--bg);">
+                    <div class="text-center">
+                        <p class="text-[9px] font-bold uppercase" style="color: var(--text-secondary);">Calorias</p>
+                        <p id="planoCalorias" class="font-bold text-emerald-500">0</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[9px] font-bold uppercase" style="color: var(--text-secondary);">Proteínas</p>
+                        <p id="planoProteinas" class="font-bold text-rose-500">0g</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-[9px] font-bold uppercase" style="color: var(--text-secondary);">Carbos</p>
+                        <p id="planoCarbos" class="font-bold text-blue-500">0g</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex gap-3 mt-6">
+                <button onclick="fecharModalPlano()" 
+                        class="flex-1 py-3 rounded-2xl font-bold transition"
+                        style="background: var(--bg); color: var(--text-secondary); border: 1px solid var(--border);">
+                    Cancelar
+                </button>
+                <button onclick="salvarPratoNosPlanos()" 
+                        class="flex-1 py-3 rounded-2xl font-bold text-white transition-all"
+                        style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                    <i class="fas fa-check mr-1"></i> Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = 'https://bsfm-back-end.onrender.com';
         const userData = JSON.parse(localStorage.getItem('usuarioLogado'));
@@ -143,6 +239,14 @@
                                     <p class="text-xs leading-relaxed" style="color: ${feedback.corTexto}; opacity: 0.9;">${feedback.texto}</p>
                                 </div>
                             </div>
+
+                            <!-- Botão Salvar nos Planos -->
+                            <button onclick="abrirModalPlano('${item.id}', '${item.alimento.replace(/'/g, "\\'")}', ${item.calorias}, ${item.proteinas}, ${item.carbos}, ${item.gorduras})" 
+                                    class="mt-4 w-full py-3 rounded-2xl font-bold text-sm transition-all duration-200 flex items-center justify-center gap-2"
+                                    style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; box-shadow: 0 4px 12px rgba(16,185,129,0.3);">
+                                <i class="fas fa-calendar-plus"></i>
+                                Salvar em Meus Planos
+                            </button>
                         </div>
                     `;
                     container.innerHTML += card;
@@ -194,6 +298,69 @@
                 corTexto: "#2563eb",
                 corBorda: "rgba(59,130,246,0.3)"
             };
+        }
+
+        // ====== MODAL SALVAR NOS PLANOS ======
+        function abrirModalPlano(id, nomePrato, calorias, proteinas, carbos, gorduras) {
+            document.getElementById('planoAnaliseId').value = id;
+            document.getElementById('planoNomePrato').value = nomePrato;
+            document.getElementById('planoIngredientes').value = '';
+            document.getElementById('planoCalorias').innerText = Math.round(calorias);
+            document.getElementById('planoProteinas').innerText = Math.round(proteinas) + 'g';
+            document.getElementById('planoCarbos').innerText = Math.round(carbos) + 'g';
+            document.getElementById('modalPlano').classList.remove('hidden');
+        }
+
+        function fecharModalPlano() {
+            document.getElementById('modalPlano').classList.add('hidden');
+        }
+
+        async function salvarPratoNosPlanos() {
+            const nomePrato = document.getElementById('planoNomePrato').value.trim();
+            const ingredientes = document.getElementById('planoIngredientes').value.trim();
+            const diaSemana = document.getElementById('planoDiaSemana').value;
+            const tipoRefeicao = document.getElementById('planoTipoRefeicao').value;
+            const calorias = parseInt(document.getElementById('planoCalorias').innerText) || 0;
+            const proteinas = parseFloat(document.getElementById('planoProteinas').innerText) || 0;
+            const carbos = parseFloat(document.getElementById('planoCarbos').innerText) || 0;
+
+            if (!nomePrato) {
+                alert('Por favor, informe o nome do prato.');
+                return;
+            }
+
+            const payload = {
+                usuarioId: userData.id,
+                diaSemana: diaSemana,
+                tipoRefeicao: tipoRefeicao,
+                nomePrato: nomePrato,
+                ingredientes: ingredientes || nomePrato,
+                modoPreparo: '',
+                calorias: calorias,
+                proteinas: proteinas,
+                carboidratos: carbos,
+                gorduras: 0,
+                dataCriacao: new Date().toISOString()
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/salvar-refeicao-semana`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('✅ Prato salvo em seus planos com sucesso!');
+                    fecharModalPlano();
+                } else {
+                    const err = await response.json();
+                    alert('Erro ao salvar: ' + (err.mensagem || 'Tente novamente.'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão com o servidor.');
+            }
         }
 
         window.onload = carregarDiario;

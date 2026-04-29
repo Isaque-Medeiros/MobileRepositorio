@@ -536,6 +536,33 @@ app.MapGet("/agua-semanal/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB
 });
 
 // ============================================================
+// NOVA ROTA: REMOVER ÚLTIMO REGISTRO DE ÁGUA
+// ============================================================
+
+// DELETE /remover-ultima-agua/{usuarioId} - Remove o último registro de água do dia
+app.MapDelete("/remover-ultima-agua/{usuarioId}", async (int usuarioId, PonteBanco.PonteDB db) => {
+    try {
+        var hoje = DateTime.Today;
+        var ultimoRegistro = await db.ConsumoAgua
+            .Where(c => c.UsuarioId == usuarioId && c.DataRegistro >= hoje)
+            .OrderByDescending(c => c.DataRegistro)
+            .FirstOrDefaultAsync();
+
+        if (ultimoRegistro == null)
+            return Results.Json(new { mensagem = "Nenhum registro de água hoje para desfazer." }, statusCode: 404);
+
+        db.ConsumoAgua.Remove(ultimoRegistro);
+        await db.SaveChangesAsync();
+        return Results.Ok(new { mensagem = "Último registro de água removido!", removido = ultimoRegistro.Ml });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[ERRO] /remover-ultima-agua: {ex.Message}");
+        return Results.Json(new { mensagem = "Erro ao remover registro de água." }, statusCode: 500);
+    }
+});
+
+// ============================================================
 // NOVAS ROTAS: REFEIÇÕES AGENDADAS (PRATOS DA SEMANA)
 // ============================================================
 

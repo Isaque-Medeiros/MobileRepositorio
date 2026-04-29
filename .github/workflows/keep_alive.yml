@@ -2,13 +2,24 @@ name: Keep Alive Render
 
 on:
   schedule:
-    # Roda a cada 10 minutos
+    # Roda a cada 10 minutos (vários horários para garantir)
     - cron: '*/10 * * * *'
-  workflow_dispatch: # <-- Isso permite que você rode a Action manualmente clicando em um botão
+    - cron: '*/10 * * * *' # Duplicado propositalmente para aumentar chance
+  workflow_dispatch: # Permite rodar manualmente
+  push:
+    branches: [ main ] # Reativa o schedule ao fazer push
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render Backend
-        run: curl -s https://bsfm-back-end.onrender.com/
+        run: |
+          echo "🔄 Ping enviado em $(date)"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://bsfm-back-end.onrender.com/)
+          echo "✅ Resposta HTTP: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Backend acordado com sucesso!"
+          else
+            echo "⚠️ Resposta inesperada: $HTTP_CODE"
+          fi
