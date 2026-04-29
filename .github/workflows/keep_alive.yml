@@ -10,4 +10,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping Render Backend
-        run: curl -s https://bsfm-back-end.onrender.com
+        run: curl -s http://bsfm-back-end.onrender.com/
