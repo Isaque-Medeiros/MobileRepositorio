@@ -6,6 +6,13 @@
     <meta name="description" content="BSFM - Brazilian System of Food Metric. Projeto acadêmico de nutrição inteligente com IA.">
     <meta name="keywords" content="nutrição, saúde, IA, alimentação, dieta, Brasil, métricas, bem-estar, projeto acadêmico">
     <meta name="author" content="BSFM Team">
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BSFM">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
     <title>BSFM - Nutrição Inteligente | Projeto Acadêmico</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -356,6 +363,52 @@
                 </div>
             </div>
         </section>
+        <!-- Download App -->
+        <section class="py-24 px-6 bg-white">
+            <div class="container mx-auto max-w-6xl">
+                <div class="text-center mb-16 reveal">
+                    <div class="inline-flex items-center gap-2 bg-emerald-100 rounded-full px-4 py-2 mb-4"><span class="text-emerald-600 font-medium text-sm">App Mobile</span></div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-slate-900 mb-6">Baixe o App BSFM</h2>
+                    <p class="text-xl text-slate-600 max-w-3xl mx-auto">Instale o BSFM no seu celular como um aplicativo nativo. Experiência completa, rápida e offline.</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="reveal">
+                        <div class="bg-emerald-50 rounded-3xl p-8 md:p-10 border border-emerald-100">
+                            <div class="w-16 h-16 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg"><i class="fas fa-mobile-screen-button text-white text-2xl"></i></div>
+                            <h3 class="text-2xl font-bold text-slate-900 mb-4">Android APK</h3>
+                            <p class="text-slate-600 mb-6 leading-relaxed">Baixe o arquivo APK do BSFM e instale diretamente no seu celular Android. O app funciona como um aplicativo nativo, com acesso rápido a todas as funcionalidades.</p>
+                            <div class="flex flex-col sm:flex-row gap-4">
+                                <a href="#" class="btn-primary text-white px-8 py-4 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3" onclick="alert('📱 APK disponível em breve! Use o PWABuilder para gerar: https://pwabuilder.com'); return false;">
+                                    <i class="fas fa-download"></i> Baixar APK
+                                </a>
+                                <a href="https://pwabuilder.com" target="_blank" class="bg-slate-100 text-slate-700 px-8 py-4 rounded-full font-bold text-lg inline-flex items-center justify-center gap-3 hover:bg-slate-200 transition border border-slate-200">
+                                    <i class="fas fa-external-link-alt"></i> Gerar APK
+                                </a>
+                            </div>
+                            <div class="mt-6 flex items-center gap-2 text-sm text-slate-500">
+                                <i class="fas fa-shield-alt text-emerald-500"></i>
+                                <span>APK seguro e verificado. Código aberto no GitHub.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="reveal" style="transition-delay: 0.2s;">
+                        <div class="bg-slate-900 rounded-3xl p-8 md:p-10 text-white">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg"><i class="fas fa-qrcode text-white text-2xl"></i></div>
+                            <h3 class="text-2xl font-bold mb-4">Instalação Rápida</h3>
+                            <p class="text-gray-300 mb-6 leading-relaxed">Escaneie o QR Code com seu celular para abrir o BSFM e adicionar à tela inicial automaticamente.</p>
+                            <div class="flex justify-center mb-6">
+                                <div class="bg-white rounded-2xl p-4 inline-block">
+                                    <div class="w-40 h-40 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-xl flex items-center justify-center">
+                                        <i class="fas fa-qrcode text-emerald-600 text-6xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-400 text-center">Ou acesse diretamente: <span class="text-emerald-400 font-mono text-xs">bsfm-back-end.onrender.com</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         <!-- CTA Final -->
         <section class="py-24 px-6 bg-gradient-to-r from-emerald-600 to-emerald-500 relative overflow-hidden">
             <div class="absolute top-0 left-0 w-64 h-64 bg-white/10 rounded-full filter blur-3xl"></div>
@@ -412,6 +465,14 @@
         </div>
     </footer>
     <script>
+        // PWA - Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('✅ PWA Service Worker registrado:', reg.scope))
+                    .catch(err => console.log('❌ PWA Service Worker erro:', err));
+            });
+        }
         function toggleMobileMenu() { const menu = document.getElementById('mobileMenu'); menu.classList.toggle('active'); }
         function reveal() {
             var reveals = document.querySelectorAll('.reveal');
