@@ -12,7 +12,7 @@ const urlsToCache = [
   '/hospitais.html',
   '/libras.html',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/Iconebsfm.png'
 ];
 
 // Instalação - cache inicial
