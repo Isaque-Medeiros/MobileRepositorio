@@ -1,0 +1,13 @@
+name: Keep Alive Render
+
+on:
+  schedule:
+      # Roda a cada 10 minutos
+          - cron: '*/12 * * * *'
+
+          jobs:
+            ping:
+                runs-on: ubuntu-latest
+                    steps:
+                          - name: Ping Render Backend
+                                  run: curl -s https://bsfm-back-end.onrender.com
