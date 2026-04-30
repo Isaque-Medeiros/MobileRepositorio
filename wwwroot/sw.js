@@ -48,6 +48,28 @@ self.addEventListener('fetch', event => {
         // Se deu certo, atualiza o cache
         if (response.status === 200) {
           const responseClone = response.clone();
+
+// Notificações Push
+self.addEventListener('push', event => {
+  const options = {
+    body: event.data?.text() || 'Nova notificação do BSFM',
+    icon: 'icons/Iconebsfm.png',
+    badge: 'icons/Iconebsfm.png',
+    vibrate: [200, 100, 200],
+    tag: 'bsfm-notification'
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification('BSFM - Nutrição Inteligente', options)
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('/')
+  );
+});
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseClone);
           });
