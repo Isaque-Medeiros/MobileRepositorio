@@ -548,6 +548,141 @@
                 if (target) { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
             });
         });
+
+        // Sistema de Instalação da PWA
+        let deferredPrompt;
+        const installButton = document.createElement('button');
+        installButton.id = 'installButton';
+        installButton.innerHTML = '📱 INSTALAR APP';
+        installButton.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            display: none;
+            animation: pulse 2s infinite;
+        `;
+        
+        // Adicionar estilos de animação
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+                50% { transform: scale(1.05); box-shadow: 0 6px 16px rgba(0,0,0,0.4); }
+                100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+            }
+            #installButton:hover {
+                background: linear-gradient(135deg, #059669, #047857);
+                transform: translateY(-2px);
+            }
+        `;
+        document.head.appendChild(style);
+        document.body.appendChild(installButton);
+
+        // Evento para capturar o prompt de instalação
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+            
+            console.log('✅ Prompt de instalação disponível!');
+        });
+
+        // Botão de instalação
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) {
+                alert('ℹ️ Seu navegador não suporta instalação direta. Use o menu do navegador → "Adicionar à tela inicial"');
+                return;
+            }
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('✅ App instalado com sucesso!');
+                installButton.style.display = 'none';
+            } else {
+                console.log('❌ Instalação cancelada pelo usuário');
+            }
+            
+            deferredPrompt = null;
+        });
+
+        // Verificar se o app já está instalado
+        window.addEventListener('appinstalled', () => {
+            console.log('🎉 App instalado com sucesso!');
+            installButton.style.display = 'none';
+            deferredPrompt = null;
+        });
+
+        // Mostrar botão se for uma PWA (dispositivo móvel)
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            console.log('📱 App já instalado como PWA');
+            installButton.style.display = 'none';
+        }
+
+        // Detectar se é dispositivo móvel e mostrar botão após 3 segundos
+        if (/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            setTimeout(() => {
+                if (!deferredPrompt && !window.matchMedia('(display-mode: standalone)').matches) {
+                    installButton.style.display = 'block';
+                    installButton.innerHTML = '📱 ADICIONAR À TELA INICIAL';
+                }
+            }, 3000);
+        }
+
+        // Botão para gerar APK diretamente (para desktop)
+        if (!/Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            const apkButton = document.createElement('button');
+            apkButton.id = 'apkButton';
+            apkButton.innerHTML = '📦 BAIXAR APK';
+            apkButton.style.cssText = `
+                position: fixed;
+                bottom: 70px;
+                right: 20px;
+                background: linear-gradient(135deg, #3b82f6, #2563eb);
+                color: white;
+                border: none;
+                border-radius: 25px;
+                padding: 12px 20px;
+                font-weight: bold;
+                font-size: 14px;
+                cursor: pointer;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                z-index: 10000;
+                animation: pulse 2s infinite;
+            `;
+            
+            apkButton.addEventListener('click', async () => {
+                apkButton.innerHTML = '⏳ GERANDO APK...';
+                apkButton.disabled = true;
+                
+                try {
+                    const response = await fetch('/api/gerar-apk');
+                    if (response.ok) {
+                        window.open('/api/gerar-apk', '_blank');
+                    } else {
+                        alert('❌ Erro ao gerar APK. Tente novamente.');
+                    }
+                } catch (error) {
+                    alert('❌ Erro ao conectar com o servidor.');
+                } finally {
+                    apkButton.innerHTML = '📦 BAIXAR APK';
+                    apkButton.disabled = false;
+                }
+            });
+            
+            document.body.appendChild(apkButton);
+        }
     </script>
 </body>
 </html>

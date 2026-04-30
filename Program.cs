@@ -97,6 +97,26 @@ app.MapGet("/", (IWebHostEnvironment env) =>
 
 // --- SUAS ROTAS DE API ---
 
+// Rota para gerar APK automaticamente
+app.MapGet("/api/gerar-apk", async (HttpContext context, IWebHostEnvironment env) => {
+    try {
+        var apkUrl = await GerarAPKAutomaticamente(context, env);
+        return Results.Redirect(apkUrl);
+    } catch (Exception ex) {
+        return Results.Problem($"Erro ao gerar APK: {ex.Message}");
+    }
+});
+
+// Função para gerar APK automaticamente
+async Task<string> GerarAPKAutomaticamente(HttpContext context, IWebHostEnvironment env) {
+    var siteUrl = $"{context.Request.Scheme}://{context.Request.Host}";
+    
+    // Usar PWABuilder API para gerar APK diretamente
+    var pwabuilderUrl = $"https://www.pwabuilder.com/api/apiappx?url={Uri.EscapeDataString(siteUrl)}&name=BSFM&package=com.bsfm.nutricao&version=1.0.0";
+    
+    return pwabuilderUrl;
+}
+
 app.MapPost("/solicitar-codigo", (SolicitacaoEmail req) => {
     try {
         using var scope = app.Services.CreateScope();
